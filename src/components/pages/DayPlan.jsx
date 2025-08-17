@@ -161,11 +161,11 @@ const DayPlan = () => {
             </div>
           )}
 
-          {sectionData?.checklist && sectionData.checklist.length > 0 && (
+{sectionData?.checklist && sectionData.checklist.length > 0 && (
             <div className="space-y-2">
               <h5 className="font-medium text-gray-900">📝 Lista de tareas:</h5>
               {sectionData.checklist.map((item, index) => (
-                <div key={index} className="flex items-center space-x-2">
+                <div key={`${item}-${index}`} className="flex items-center space-x-2">
                   <ApperIcon name="CheckSquare" className="h-4 w-4 text-emerald-500" />
                   <span className="text-sm text-gray-700">{item}</span>
                 </div>
