@@ -1,0 +1,21 @@
+[
+  {
+    "Id": 1,
+    "userId": 1,
+    "day": 0,
+    "weight": 72.5,
+    "height": 165,
+    "waist": 88.5,
+    "hip": 98.2,
+    "bodyFat": 28.5,
+    "muscle": 32.8,
+    "visceralFat": 9,
+    "metabolicAge": 32,
+    "waterGlasses": 6,
+    "dailySteps": 7500,
+    "sleepHours": 7.5,
+    "caffeineSource": "cafe",
+    "initialNotes": "Me siento emocionada por comenzar este reto. Mi meta es perder 3-4 kg y mejorar mi energía diaria. Quiero crear hábitos que pueda mantener a largo plazo.",
+    "createdAt": "2024-01-15T10:30:00Z"
+  }
+]

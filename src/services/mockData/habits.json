@@ -1,0 +1,52 @@
+[
+  {
+    "Id": 1,
+    "name": "Beber 8 vasos de agua",
+    "category": "Salud",
+    "target": 8,
+    "unit": "vasos",
+    "status": "completed",
+    "currentValue": 8,
+    "createdAt": "2024-01-15T11:00:00Z"
+  },
+  {
+    "Id": 2,
+    "name": "Caminar 10,000 pasos",
+    "category": "Ejercicio", 
+    "target": 10000,
+    "unit": "pasos",
+    "status": "partial",
+    "currentValue": 7500,
+    "createdAt": "2024-01-15T11:05:00Z"
+  },
+  {
+    "Id": 3,
+    "name": "Dormir 8 horas",
+    "category": "Salud",
+    "target": 8,
+    "unit": "horas", 
+    "status": "incomplete",
+    "currentValue": 0,
+    "createdAt": "2024-01-15T11:10:00Z"
+  },
+  {
+    "Id": 4,
+    "name": "Meditar 10 minutos",
+    "category": "Mental",
+    "target": 10,
+    "unit": "minutos",
+    "status": "completed",
+    "currentValue": 15,
+    "createdAt": "2024-01-15T11:15:00Z"
+  },
+  {
+    "Id": 5,
+    "name": "Comer 5 porciones de vegetales",
+    "category": "Alimentación",
+    "target": 5,
+    "unit": "porciones",
+    "status": "partial", 
+    "currentValue": 3,
+    "createdAt": "2024-01-15T11:20:00Z"
+  }
+]

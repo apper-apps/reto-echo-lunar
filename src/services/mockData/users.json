@@ -1,0 +1,23 @@
+[
+  {
+    "Id": 1,
+    "email": "usuario@ejemplo.com",
+    "phone": "+52-555-123-4567",
+    "role": "Participante",
+    "createdAt": "2024-01-15T10:00:00Z",
+    "profile": {
+      "fullName": "María Elena González",
+      "birthDate": "1985-03-15",
+      "gender": "Femenino",
+      "city": "Ciudad de México",
+      "state": "CDMX",
+      "country": "México",
+      "timezone": "America/Mexico_City",
+      "objective": "Bajar grasa",
+      "activityLevel": "Moderado",
+      "healthConditions": "Ninguna condición relevante",
+      "phone": "+52-555-123-4567",
+      "email": "usuario@ejemplo.com"
+    }
+  }
+]

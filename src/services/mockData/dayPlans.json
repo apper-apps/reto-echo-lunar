@@ -1,0 +1,101 @@
+[
+  {
+    "Id": 1,
+    "day": 1,
+    "morning": {
+      "title": "¡Bienvenido al Día 1!",
+      "content": "Hoy comienza tu transformación. El viaje de mil millas comienza con un solo paso, y ese paso lo das hoy.",
+      "reflection": "¿Qué versión de ti mismo quieres ser en 21 días?",
+      "checklist": [
+        "Pésate y registra tus medidas iniciales",
+        "Bebe un vaso de agua al despertar", 
+        "Establece tu intención para el día",
+        "Toma tu foto de progreso"
+      ],
+      "completed": true
+    },
+    "midday": {
+      "title": "El Poder de los Pequeños Cambios",
+      "content": "Los grandes resultados no vienen de acciones perfectas, sino de pequeñas acciones consistentes. Cada hábito que construyes hoy es una inversión en tu futuro yo.",
+      "completed": false
+    },
+    "afternoon": {
+      "title": "Momento de Reflexión",
+      "content": "¿Cómo te sientes hasta ahora? Recuerda que es normal sentir resistencia al cambio.",
+      "survey": "Del 1 al 5, ¿qué tan motivado te sientes hoy?",
+      "completed": false
+    },
+    "night": {
+      "title": "Cierre del Día 1",
+      "content": "¡Felicitaciones! Has completado tu primer día. Cada día completado te acerca más a tus objetivos.",
+      "reflection": "¿Qué lograste hoy que te haga sentir orgulloso?",
+      "completed": false
+    }
+  },
+  {
+    "Id": 2, 
+    "day": 2,
+    "morning": {
+      "title": "Construyendo Momentum",
+      "content": "El segundo día es crucial. Ayer plantaste la semilla, hoy la riegas. La constancia es tu superpoder.",
+      "reflection": "¿Qué hábito de ayer quieres fortalecer hoy?",
+      "checklist": [
+        "Revisa tus hábitos de ayer",
+        "Planifica tu alimentación del día",
+        "Programa 30 minutos de actividad física",
+        "Bebe agua antes del desayuno"
+      ],
+      "completed": false
+    },
+    "midday": {
+      "title": "La Regla 80/20 en Acción",
+      "content": "Enfócate en las pocas cosas que generan los mayores resultados. No se trata de ser perfecto, se trata de ser consistente en lo que realmente importa.",
+      "completed": false
+    },
+    "afternoon": {
+      "title": "Check-in de Energía",
+      "content": "¿Cómo se sienten tus niveles de energía comparados con ayer?",
+      "survey": "¿Has notado algún cambio positivo en tu energía?",
+      "completed": false  
+    },
+    "night": {
+      "title": "Reflexión del Día 2",
+      "content": "Dos días consecutivos de cuidarte a ti mismo. Estás construyendo una nueva versión de ti.",
+      "reflection": "¿Qué patrón positivo estás comenzando a notar?",
+      "completed": false
+    }
+  },
+  {
+    "Id": 3,
+    "day": 3,
+    "morning": {
+      "title": "El Tercer Día: Momento Crítico", 
+      "content": "Los estudios muestran que el día 3 es cuando muchas personas abandonan. Pero tú no eres como la mayoría. Tú persistes.",
+      "reflection": "¿Qué te motiva a seguir cuando las cosas se ponen difíciles?",
+      "checklist": [
+        "Celebra tus dos días anteriores",
+        "Identifica tu mayor desafío hasta ahora",
+        "Ajusta tus estrategias si es necesario",
+        "Visualiza tu éxito al día 21"
+      ],
+      "completed": false
+    },
+    "midday": {
+      "title": "Superando la Resistencia",
+      "content": "La resistencia es normal. Cada vez que eliges el hábito saludable sobre la tentación, fortaleces tu 'músculo' de la disciplina.",
+      "completed": false
+    },
+    "afternoon": {
+      "title": "Evaluación Rápida",
+      "content": "Momento para hacer ajustes si es necesario.",
+      "survey": "¿Qué hábito te está resultando más desafiante?",
+      "completed": false
+    },
+    "night": {
+      "title": "Tres Días Fuertes",
+      "content": "¡Ya llevas 3 días! Estás en el 14% del camino. Cada día cuenta y cada día te hace más fuerte.",
+      "reflection": "¿De qué manera te sientes diferente que hace 3 días?",
+      "completed": false
+    }
+  }
+]

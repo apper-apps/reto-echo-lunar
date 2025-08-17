@@ -1,0 +1,30 @@
+[
+  {
+    "Id": 1,
+    "userId": 1,
+    "currentDay": 3,
+    "streakDays": 2,
+    "totalPoints": 145,
+    "currentLevel": 1,
+    "adherencePercentage": 75,
+    "completedDays": 2,
+    "bestStreak": 2,
+    "totalHabits": 5,
+    "achievements": [
+      {
+        "id": 1,
+        "title": "Primer Paso",
+        "description": "Completaste tu primer día",
+        "icon": "Star",
+        "unlockedAt": "2024-01-15T22:00:00Z"
+      },
+      {
+        "id": 2, 
+        "title": "Constante",
+        "description": "2 días consecutivos completados",
+        "icon": "Flame",
+        "unlockedAt": "2024-01-16T22:00:00Z"
+      }
+    ]
+  }
+]
