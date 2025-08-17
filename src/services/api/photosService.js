@@ -13,7 +13,7 @@ export const photosService = {
     return JSON.parse(JSON.stringify(userPhotos));
   },
 
-  async savePhotos(phase, photoUrls) {
+async savePhotos(phase, photoUrls) {
     await new Promise(resolve => setTimeout(resolve, 300));
     
     const existingIndex = photos.findIndex(p => p.user_id === 1 && p.phase === phase);
@@ -24,9 +24,9 @@ export const photosService = {
       user_id: 1,
       cohort_id: 1,
       phase: phase,
-      foto_frente_url: photoUrls.foto_frente_url,
-      foto_espalda_url: photoUrls.foto_espalda_url,
-      foto_perfil_url: photoUrls.foto_perfil_url,
+      foto_frente_url: photoUrls.foto_frente_url || null,
+      foto_espalda_url: photoUrls.foto_espalda_url || null,
+      foto_perfil_url: photoUrls.foto_perfil_url || null,
       created_at: existingIndex >= 0 ? photos[existingIndex].created_at : new Date().toISOString(),
       updated_at: new Date().toISOString()
     };

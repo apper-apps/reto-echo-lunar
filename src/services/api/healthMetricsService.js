@@ -25,7 +25,7 @@ export const healthMetricsService = {
     return JSON.parse(JSON.stringify(result));
   },
 
-  async createHealthMetrics(metricsData) {
+async createHealthMetrics(metricsData) {
     await new Promise(resolve => setTimeout(resolve, 400));
     
     const maxId = healthMetrics.length > 0 ? Math.max(...healthMetrics.map(hm => hm.Id)) : 0;
@@ -35,6 +35,13 @@ export const healthMetricsService = {
     if (metricsData.peso_kg && metricsData.estatura_cm) {
       const heightInMeters = metricsData.estatura_cm / 100;
       imc = Number((metricsData.peso_kg / (heightInMeters * heightInMeters)).toFixed(1));
+    } else if (metricsData.peso_kg && metricsData.phase === "fin") {
+      // For final metrics, try to get height from initial metrics
+      const initialMetrics = healthMetrics.find(hm => hm.user_id === 1 && hm.phase === "inicio");
+      if (initialMetrics && initialMetrics.estatura_cm) {
+        const heightInMeters = initialMetrics.estatura_cm / 100;
+        imc = Number((metricsData.peso_kg / (heightInMeters * heightInMeters)).toFixed(1));
+      }
     }
     
     const newMetrics = {
@@ -56,6 +63,12 @@ export const healthMetricsService = {
       horas_sueno: metricsData.horas_sueno,
       cafeina_fuente: metricsData.cafeina_fuente,
       imc: imc,
+      // Additional fields for final metrics
+      energia_percibida: metricsData.energia_percibida,
+      habitos_mantener: metricsData.habitos_mantener,
+      satisfaccion_general: metricsData.satisfaccion_general,
+      testimonio: metricsData.testimonio,
+      permiso_uso_testimonio: metricsData.permiso_uso_testimonio,
       created_at: new Date().toISOString()
     };
     

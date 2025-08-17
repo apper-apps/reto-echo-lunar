@@ -7,73 +7,87 @@ import Input from "@/components/atoms/Input";
 import Badge from "@/components/atoms/Badge";
 import Loading from "@/components/ui/Loading";
 import { healthMetricsService } from "@/services/api/healthMetricsService";
+import { photosService } from "@/services/api/photosService";
+import { cohortMembersService } from "@/services/api/cohortMembersService";
 import { toast } from "react-toastify";
 
 const FinalMetrics = () => {
   const navigate = useNavigate();
-  const [initialMetrics, setInitialMetrics] = useState(null);
-  const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [initialMetrics, setInitialMetrics] = useState(null);
+  const [finalMetrics, setFinalMetrics] = useState(null);
+  const [showComparison, setShowComparison] = useState(false);
   
   const [formData, setFormData] = useState({
     // Final metrics
-    weight: "",
-    waist: "",
-    hip: "",
-    bodyFat: "",
-    muscle: "",
-    visceralFat: "",
-    metabolicAge: "",
-    
-    // Photos
-    frontPhoto: null,
-    backPhoto: null,
-    sidePhoto: null,
+    peso_kg: "",
+    cintura_cm: "",
+    cadera_cm: "",
+    body_fat_pct: "",
+    muscle_pct: "",
+    grasa_visceral: "",
+    edad_metabolica: "",
+    agua_vasos_promedio: "",
+    pasos_promedio: "",
+    horas_sueno: "",
     
     // Self-evaluation
-    energyLevel: 3,
-    maintainHabits: [],
-    satisfaction: 3,
-    testimonial: "",
-    allowTestimonial: false
+    energia_percibida: 3,
+    habitos_mantener: [],
+    satisfaccion_general: 3,
+    testimonio: "",
+    permiso_uso_testimonio: false
   });
 
   const [photos, setPhotos] = useState({
-    front: null,
-    back: null,
-    side: null
+    frente: null,
+    espalda: null,
+    perfil: null
   });
 
-  const totalSteps = 3;
+  const habitOptions = [
+    "Hidratación adecuada",
+    "Sueño reparador", 
+    "Actividad física regular",
+    "Alimentación consciente",
+    "Manejo del estrés"
+  ];
 
-  const loadInitialMetrics = async () => {
+  const loadInitialData = async () => {
     try {
       setLoading(true);
       const metrics = await healthMetricsService.getHealthMetrics();
       setInitialMetrics(metrics.day0);
+      setFinalMetrics(metrics.day21);
       
-      if (metrics.day0) {
+      // If final metrics already exist, show comparison
+      if (metrics.day21) {
+        setShowComparison(true);
         setFormData(prev => ({
           ...prev,
-          weight: metrics.day0.weight?.toString() || "",
-          waist: metrics.day0.waist?.toString() || "",
-          hip: metrics.day0.hip?.toString() || "",
-          bodyFat: metrics.day0.bodyFat?.toString() || "",
-          muscle: metrics.day0.muscle?.toString() || "",
-          visceralFat: metrics.day0.visceralFat?.toString() || "",
-          metabolicAge: metrics.day0.metabolicAge?.toString() || ""
+          peso_kg: metrics.day21.peso_kg?.toString() || "",
+          cintura_cm: metrics.day21.cintura_cm?.toString() || "",
+          cadera_cm: metrics.day21.cadera_cm?.toString() || "",
+          body_fat_pct: metrics.day21.body_fat_pct?.toString() || "",
+          muscle_pct: metrics.day21.muscle_pct?.toString() || "",
+          grasa_visceral: metrics.day21.grasa_visceral?.toString() || "",
+          edad_metabolica: metrics.day21.edad_metabolica?.toString() || "",
+          agua_vasos_promedio: metrics.day21.agua_vasos_promedio?.toString() || "",
+          pasos_promedio: metrics.day21.pasos_promedio?.toString() || "",
+          horas_sueno: metrics.day21.horas_sueno?.toString() || ""
         }));
       }
     } catch (err) {
-      toast.error("Error al cargar las métricas iniciales");
-      console.error("Initial metrics load error:", err);
+      toast.error("Error al cargar los datos");
+      console.error("Load initial data error:", err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadInitialMetrics();
+    loadInitialData();
   }, []);
 
   const handleInputChange = (field, value) => {
@@ -85,7 +99,6 @@ const FinalMetrics = () => {
       const reader = new FileReader();
       reader.onload = (e) => {
         setPhotos(prev => ({ ...prev, [photoType]: e.target.result }));
-        setFormData(prev => ({ ...prev, [`${photoType}Photo`]: file }));
       };
       reader.readAsDataURL(file);
     }
@@ -94,352 +107,366 @@ const FinalMetrics = () => {
   const handleHabitToggle = (habit) => {
     setFormData(prev => ({
       ...prev,
-      maintainHabits: prev.maintainHabits.includes(habit)
-        ? prev.maintainHabits.filter(h => h !== habit)
-        : [...prev.maintainHabits, habit]
+      habitos_mantener: prev.habitos_mantener.includes(habit)
+        ? prev.habitos_mantener.filter(h => h !== habit)
+        : [...prev.habitos_mantener, habit]
     }));
   };
 
-  const validateStep = (step) => {
-    switch (step) {
-      case 1:
-        const requiredFields = ["weight", "waist", "hip"];
-        return requiredFields.every(field => formData[field] && formData[field].trim() !== "");
-      
-      case 2:
-        return photos.front && photos.back && photos.side;
-      
-      case 3:
-        return formData.testimonial.trim() !== "";
-      
-      default:
-        return false;
-    }
-  };
-
-  const handleNext = () => {
-    if (validateStep(currentStep)) {
-      setCurrentStep(prev => Math.min(prev + 1, totalSteps));
-    } else {
-      toast.error("Por favor completa todos los campos requeridos");
-    }
-  };
-
-  const handlePrevious = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1));
+  const validateForm = () => {
+    const requiredFields = ["peso_kg", "cintura_cm", "cadera_cm"];
+    const hasRequiredFields = requiredFields.every(field => 
+      formData[field] && formData[field].trim() !== ""
+    );
+    
+    const hasTestimonial = formData.testimonio.trim() !== "";
+    
+    return hasRequiredFields && hasTestimonial;
   };
 
   const handleSubmit = async () => {
-    try {
-      if (!validateStep(3)) {
-        toast.error("Por favor completa la información requerida");
-        return;
-      }
+    if (!validateForm()) {
+      toast.error("Por favor completa todos los campos requeridos");
+      return;
+    }
 
+    try {
+      setSaving(true);
+
+      // Save final metrics
       const finalData = {
-        day: 21,
-        weight: parseFloat(formData.weight),
-        waist: parseFloat(formData.waist),
-        hip: parseFloat(formData.hip),
-        bodyFat: formData.bodyFat ? parseFloat(formData.bodyFat) : null,
-        muscle: formData.muscle ? parseFloat(formData.muscle) : null,
-        visceralFat: formData.visceralFat ? parseInt(formData.visceralFat) : null,
-        metabolicAge: formData.metabolicAge ? parseInt(formData.metabolicAge) : null,
-        energyLevel: formData.energyLevel,
-        maintainHabits: formData.maintainHabits,
-        satisfaction: formData.satisfaction,
-        testimonial: formData.testimonial,
-        allowTestimonial: formData.allowTestimonial
+        phase: "fin",
+        peso_kg: parseFloat(formData.peso_kg),
+        cintura_cm: parseFloat(formData.cintura_cm),
+        cadera_cm: parseFloat(formData.cadera_cm),
+        body_fat_pct: formData.body_fat_pct ? parseFloat(formData.body_fat_pct) : null,
+        muscle_pct: formData.muscle_pct ? parseFloat(formData.muscle_pct) : null,
+        grasa_visceral: formData.grasa_visceral ? parseInt(formData.grasa_visceral) : null,
+        edad_metabolica: formData.edad_metabolica ? parseInt(formData.edad_metabolica) : null,
+        agua_vasos_promedio: formData.agua_vasos_promedio ? parseInt(formData.agua_vasos_promedio) : null,
+        pasos_promedio: formData.pasos_promedio ? parseInt(formData.pasos_promedio) : null,
+        horas_sueno: formData.horas_sueno ? parseFloat(formData.horas_sueno) : null,
+        energia_percibida: formData.energia_percibida,
+        habitos_mantener: formData.habitos_mantener,
+        satisfaccion_general: formData.satisfaccion_general,
+        testimonio: formData.testimonio,
+        permiso_uso_testimonio: formData.permiso_uso_testimonio
       };
 
       await healthMetricsService.createHealthMetrics(finalData);
+
+      // Save photos if any
+      if (photos.frente || photos.espalda || photos.perfil) {
+        await photosService.savePhotos("fin", {
+          foto_frente_url: photos.frente,
+          foto_espalda_url: photos.espalda,
+          foto_perfil_url: photos.perfil
+        });
+      }
+
+      // Mark day 21 as completed
+      await cohortMembersService.markDay21Completed();
+
+      toast.success("¡Excelente! Tus resultados finales se guardaron.");
       
-      toast.success("¡Felicitaciones! Has completado el Reto 21D 🎉🏆");
-      setTimeout(() => {
-        navigate("/progreso");
-      }, 2000);
+      // Reload data to show comparison
+      await loadInitialData();
+      setShowComparison(true);
+
     } catch (err) {
-      toast.error("Error al guardar las métricas finales");
-      console.error("Final metrics submit error:", err);
+      toast.error("Error al guardar los resultados finales");
+      console.error("Submit error:", err);
+    } finally {
+      setSaving(false);
     }
+  };
+
+  const getMetricChange = (field) => {
+    if (!initialMetrics || !finalMetrics) return null;
+    
+    const initial = initialMetrics[field];
+    const final = finalMetrics[field];
+    
+    if (!initial || !final) return null;
+    
+    const change = final - initial;
+    const percentage = Math.abs((change / initial) * 100);
+    
+    // For weight, body fat, visceral fat, metabolic age, and waist/hip - decrease is good
+    const positiveChange = ["peso_kg", "body_fat_pct", "grasa_visceral", "edad_metabolica", "cintura_cm", "cadera_cm"].includes(field)
+      ? change < 0
+      : change > 0;
+
+    return {
+      initial,
+      final,
+      change: change.toFixed(1),
+      percentage: percentage.toFixed(1),
+      isPositive: positiveChange
+    };
+  };
+
+  const renderComparison = () => {
+    if (!initialMetrics || !finalMetrics) return null;
+
+    const metrics = [
+      { field: "peso_kg", label: "Peso", unit: "kg" },
+      { field: "cintura_cm", label: "Cintura", unit: "cm" },
+      { field: "cadera_cm", label: "Cadera", unit: "cm" },
+      { field: "body_fat_pct", label: "% Grasa", unit: "%" },
+      { field: "muscle_pct", label: "% Músculo", unit: "%" },
+      { field: "grasa_visceral", label: "Grasa Visceral", unit: "" }
+    ];
+
+    return (
+      <Card className="p-6">
+        <h3 className="font-display font-bold text-2xl text-gray-900 mb-6">
+          Tu Progreso
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {metrics.map(({ field, label, unit }) => {
+            const change = getMetricChange(field);
+            
+            if (!change) return null;
+
+            return (
+              <Card key={field} className="p-4 border">
+                <div className="text-center space-y-2">
+                  <h4 className="font-semibold text-gray-900">{label}</h4>
+                  <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
+                    <span>{change.initial}{unit}</span>
+                    <ApperIcon 
+                      name="ArrowRight" 
+                      className="h-4 w-4" 
+                    />
+                    <span>{change.final}{unit}</span>
+                  </div>
+                  <div className={`flex items-center justify-center space-x-1 ${
+                    change.isPositive ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    <ApperIcon 
+                      name={change.isPositive ? "TrendingUp" : "TrendingDown"} 
+                      className="h-4 w-4" 
+                    />
+                    <span className="font-semibold">
+                      {change.isPositive ? "+" : ""}{change.change} {unit}
+                    </span>
+                    <span className="text-xs">
+                      ({change.percentage}%)
+                    </span>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* BMI Comparison */}
+        {initialMetrics.imc && finalMetrics.imc && (
+          <div className="mt-6 p-4 bg-blue-50 rounded-xl">
+            <h4 className="font-semibold text-blue-900 mb-2">Índice de Masa Corporal (IMC)</h4>
+            <div className="flex items-center justify-center space-x-4 text-blue-800">
+              <span>Inicial: {initialMetrics.imc}</span>
+              <ApperIcon name="ArrowRight" className="h-4 w-4" />
+              <span>Final: {finalMetrics.imc}</span>
+              <span className="font-semibold">
+                (Δ {(finalMetrics.imc - initialMetrics.imc).toFixed(1)})
+              </span>
+            </div>
+          </div>
+        )}
+      </Card>
+    );
   };
 
   if (loading) return <Loading />;
 
-  const getMetricChange = (field) => {
-    const initial = initialMetrics?.[field];
-    const current = parseFloat(formData[field]);
-    
-    if (!initial || !current) return null;
-    
-    const change = current - initial;
-    const percentage = Math.abs((change / initial) * 100).toFixed(1);
-    
-    return {
-      value: change.toFixed(1),
-      percentage,
-      isPositive: field === "weight" ? change < 0 : change > 0
-    };
-  };
-
-  const renderProgressBar = () => (
-    <div className="w-full bg-gray-200 rounded-full h-2 mb-8">
-      <div
-        className="bg-gradient-to-r from-primary to-secondary h-2 rounded-full transition-all duration-300"
-        style={{ width: `${(currentStep / totalSteps) * 100}%` }}
-      ></div>
-    </div>
-  );
-
-  const renderStep1 = () => (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
-        <div className="bg-gradient-to-r from-emerald-100 to-green-100 w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center">
-          <ApperIcon name="Target" className="h-10 w-10 text-emerald-600" />
+  return (
+    <div className="max-w-4xl mx-auto space-y-8">
+      {/* Header */}
+      <Card className="p-6 bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 text-white">
+        <div className="text-center">
+          <h1 className="font-display font-bold text-3xl mb-2">
+            Día 21 – Cierre y Resultados
+          </h1>
+          <p className="text-emerald-100">
+            Registra tus resultados finales y mira tu progreso
+          </p>
         </div>
-        <h2 className="font-display font-bold text-2xl text-gray-900 mb-2">
-          Métricas Finales - Día 21
-        </h2>
-        <p className="text-gray-600">
-          ¡Felicitaciones! Vamos a registrar tu transformación
-        </p>
-      </div>
+      </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Current Metrics */}
-        <div className="space-y-6">
-          <h3 className="font-semibold text-lg text-gray-900">Métricas Actuales</h3>
-          
+      {/* Final Metrics Form */}
+      <Card className="p-6">
+        <h2 className="font-display font-bold text-2xl text-gray-900 mb-6">
+          Métricas Finales
+        </h2>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Input
-            label="Peso actual (kg) *"
+            label="Peso final (kg) *"
             type="number"
             step="0.1"
-            value={formData.weight}
-            onChange={(e) => handleInputChange("weight", e.target.value)}
+            value={formData.peso_kg}
+            onChange={(e) => handleInputChange("peso_kg", e.target.value)}
             placeholder="70.5"
           />
 
           <Input
-            label="Cintura actual (cm) *"
+            label="Cintura final (cm) *"
             type="number"
             step="0.1"
-            value={formData.waist}
-            onChange={(e) => handleInputChange("waist", e.target.value)}
+            value={formData.cintura_cm}
+            onChange={(e) => handleInputChange("cintura_cm", e.target.value)}
             placeholder="85.5"
           />
 
           <Input
-            label="Cadera actual (cm) *"
+            label="Cadera final (cm) *"
             type="number"
             step="0.1"
-            value={formData.hip}
-            onChange={(e) => handleInputChange("hip", e.target.value)}
+            value={formData.cadera_cm}
+            onChange={(e) => handleInputChange("cadera_cm", e.target.value)}
             placeholder="95.0"
           />
 
           <Input
-            label="Porcentaje de grasa corporal (%)"
+            label="% de grasa final"
             type="number"
             step="0.1"
-            value={formData.bodyFat}
-            onChange={(e) => handleInputChange("bodyFat", e.target.value)}
+            value={formData.body_fat_pct}
+            onChange={(e) => handleInputChange("body_fat_pct", e.target.value)}
             placeholder="25.3"
           />
 
           <Input
-            label="Porcentaje de músculo (%)"
+            label="% de músculo final"
             type="number"
             step="0.1"
-            value={formData.muscle}
-            onChange={(e) => handleInputChange("muscle", e.target.value)}
+            value={formData.muscle_pct}
+            onChange={(e) => handleInputChange("muscle_pct", e.target.value)}
             placeholder="35.2"
           />
 
           <Input
-            label="Grasa visceral (nivel)"
+            label="Grasa visceral final"
             type="number"
-            value={formData.visceralFat}
-            onChange={(e) => handleInputChange("visceralFat", e.target.value)}
+            value={formData.grasa_visceral}
+            onChange={(e) => handleInputChange("grasa_visceral", e.target.value)}
             placeholder="8"
           />
 
           <Input
-            label="Edad metabólica (años)"
+            label="Edad metabólica final"
             type="number"
-            value={formData.metabolicAge}
-            onChange={(e) => handleInputChange("metabolicAge", e.target.value)}
+            value={formData.edad_metabolica}
+            onChange={(e) => handleInputChange("edad_metabolica", e.target.value)}
             placeholder="28"
           />
-        </div>
 
-        {/* Comparison */}
-        <div className="space-y-6">
-          <h3 className="font-semibold text-lg text-gray-900">Tu Progreso</h3>
-          
-          {initialMetrics && (
-            <div className="space-y-4">
-              {["weight", "waist", "hip", "bodyFat", "muscle"].map((field) => {
-                const change = getMetricChange(field);
-                const labels = {
-                  weight: "Peso",
-                  waist: "Cintura", 
-                  hip: "Cadera",
-                  bodyFat: "% Grasa",
-                  muscle: "% Músculo"
-                };
-                const units = {
-                  weight: "kg",
-                  waist: "cm",
-                  hip: "cm", 
-                  bodyFat: "%",
-                  muscle: "%"
-                };
+          <Input
+            label="Vasos de agua (promedio)"
+            type="number"
+            value={formData.agua_vasos_promedio}
+            onChange={(e) => handleInputChange("agua_vasos_promedio", e.target.value)}
+            placeholder="8"
+          />
 
-                return (
-                  <Card key={field} className="p-4">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h4 className="font-medium text-gray-900">{labels[field]}</h4>
-                        <p className="text-sm text-gray-600">
-                          Inicial: {initialMetrics[field] || "N/A"} {units[field]}
-                        </p>
-                      </div>
-                      {change && (
-                        <Badge
-                          variant={change.isPositive ? "success" : "danger"}
-                        >
-                          {change.isPositive ? "+" : ""}{change.value} {units[field]}
-                          ({change.percentage}%)
-                        </Badge>
-                      )}
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+          <Input
+            label="Pasos (promedio diario)"
+            type="number"
+            value={formData.pasos_promedio}
+            onChange={(e) => handleInputChange("pasos_promedio", e.target.value)}
+            placeholder="10000"
+          />
 
-  const renderStep2 = () => (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
-        <div className="bg-gradient-to-r from-purple-100 to-blue-100 w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center">
-          <ApperIcon name="Camera" className="h-10 w-10 text-purple-600" />
+          <Input
+            label="Horas de sueño (promedio)"
+            type="number"
+            step="0.1"
+            value={formData.horas_sueno}
+            onChange={(e) => handleInputChange("horas_sueno", e.target.value)}
+            placeholder="7.5"
+          />
         </div>
-        <h2 className="font-display font-bold text-2xl text-gray-900 mb-2">
-          Fotos Finales
+      </Card>
+
+      {/* Photos Section */}
+      <Card className="p-6">
+        <h2 className="font-display font-bold text-2xl text-gray-900 mb-6">
+          Fotos Finales (Opcionales pero recomendadas)
         </h2>
-        <p className="text-gray-600">
-          Captura tu transformación con las fotos del día 21
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {["front", "back", "side"].map((photoType) => (
-          <Card key={photoType} className="p-6 text-center">
-            <h3 className="font-semibold text-gray-900 mb-4 capitalize">
-              {photoType === "front" ? "Frente" : photoType === "back" ? "Espalda" : "Perfil"}
-            </h3>
-            
-            {photos[photoType] ? (
-              <div className="space-y-4">
-                <img
-                  src={photos[photoType]}
-                  alt={`Foto final de ${photoType}`}
-                  className="w-full h-48 object-cover rounded-lg"
-                />
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    setPhotos(prev => ({ ...prev, [photoType]: null }));
-                    setFormData(prev => ({ ...prev, [`${photoType}Photo`]: null }));
-                  }}
-                >
-                  <ApperIcon name="X" className="h-4 w-4 mr-2" />
-                  Eliminar
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
-                  <div className="text-center">
-                    <ApperIcon name="Camera" className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600">Subir foto final</p>
-                  </div>
-                </div>
-                
-                <label className="block">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handlePhotoUpload(photoType, e.target.files[0])}
-                    className="hidden"
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {["frente", "espalda", "perfil"].map((photoType) => (
+            <div key={photoType} className="text-center">
+              <h3 className="font-semibold text-gray-900 mb-4 capitalize">
+                Foto de {photoType}
+              </h3>
+              
+              {photos[photoType] ? (
+                <div className="space-y-4">
+                  <img
+                    src={photos[photoType]}
+                    alt={`Foto final de ${photoType}`}
+                    className="w-full h-48 object-cover rounded-lg border-2 border-gray-200"
                   />
-                  <Button variant="primary" size="sm" className="w-full">
-                    <ApperIcon name="Upload" className="h-4 w-4 mr-2" />
-                    Seleccionar foto
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setPhotos(prev => ({ ...prev, [photoType]: null }))}
+                  >
+                    <ApperIcon name="X" className="h-4 w-4 mr-2" />
+                    Eliminar
                   </Button>
-                </label>
-              </div>
-            )}
-          </Card>
-        ))}
-      </div>
-
-      <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-200">
-        <div className="flex items-start space-x-3">
-          <ApperIcon name="Trophy" className="h-5 w-5 text-emerald-600 mt-0.5" />
-          <div className="text-sm">
-            <p className="text-emerald-900 font-medium mb-1">🏆 ¡Último paso para completar tu transformación!</p>
-            <p className="text-emerald-800">
-              Toma las fotos finales en las mismas condiciones que las iniciales para poder ver claramente tu progreso.
-            </p>
-          </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
+                    <div className="text-center">
+                      <ApperIcon name="Camera" className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-600">Subir foto final</p>
+                    </div>
+                  </div>
+                  
+                  <label className="block">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handlePhotoUpload(photoType, e.target.files[0])}
+                      className="hidden"
+                    />
+                    <Button variant="secondary" size="sm" className="w-full">
+                      <ApperIcon name="Upload" className="h-4 w-4 mr-2" />
+                      Seleccionar foto
+                    </Button>
+                  </label>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
-      </div>
-    </div>
-  );
+      </Card>
 
-  const renderStep3 = () => {
-    const habitOptions = [
-      "Hidratación adecuada",
-      "Sueño reparador", 
-      "Actividad física regular",
-      "Alimentación consciente",
-      "Manejo del estrés"
-    ];
-
-    return (
-      <div className="space-y-6">
-        <div className="text-center mb-8">
-          <div className="bg-gradient-to-r from-purple-100 to-blue-100 w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center">
-            <ApperIcon name="Heart" className="h-10 w-10 text-purple-600" />
-          </div>
-          <h2 className="font-display font-bold text-2xl text-gray-900 mb-2">
-            Autoevaluación Final
-          </h2>
-          <p className="text-gray-600">
-            Reflexiona sobre tu experiencia en estos 21 días
-          </p>
-        </div>
-
+      {/* Self-Evaluation */}
+      <Card className="p-6">
+        <h2 className="font-display font-bold text-2xl text-gray-900 mb-6">
+          Autoevaluación
+        </h2>
+        
         <div className="space-y-8">
           {/* Energy Level */}
-          <Card className="p-6">
+          <div>
             <h3 className="font-semibold text-gray-900 mb-4">
-              ¿Cómo calificarías tu nivel de energía actual? (1-5)
+              Energía percibida (1-5)
             </h3>
             <div className="flex space-x-4">
               {[1, 2, 3, 4, 5].map((level) => (
                 <button
                   key={level}
-                  onClick={() => handleInputChange("energyLevel", level)}
+                  onClick={() => handleInputChange("energia_percibida", level)}
                   className={`w-12 h-12 rounded-full font-semibold transition-all duration-200 ${
-                    formData.energyLevel === level
+                    formData.energia_percibida === level
                       ? "bg-gradient-to-r from-primary to-secondary text-white scale-110"
                       : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                   }`}
@@ -448,16 +475,12 @@ const FinalMetrics = () => {
                 </button>
               ))}
             </div>
-            <div className="flex justify-between text-xs text-gray-600 mt-2">
-              <span>Muy bajo</span>
-              <span>Excelente</span>
-            </div>
-          </Card>
+          </div>
 
           {/* Habits to Maintain */}
-          <Card className="p-6">
+          <div>
             <h3 className="font-semibold text-gray-900 mb-4">
-              ¿Qué hábitos planeas mantener? (Puedes seleccionar varios)
+              Hábitos que mantendrías (puedes seleccionar varios)
             </h3>
             <div className="space-y-3">
               {habitOptions.map((habit) => (
@@ -467,7 +490,7 @@ const FinalMetrics = () => {
                 >
                   <input
                     type="checkbox"
-                    checked={formData.maintainHabits.includes(habit)}
+                    checked={formData.habitos_mantener.includes(habit)}
                     onChange={() => handleHabitToggle(habit)}
                     className="w-5 h-5 text-primary border-gray-300 rounded focus:ring-purple-200"
                   />
@@ -475,20 +498,20 @@ const FinalMetrics = () => {
                 </label>
               ))}
             </div>
-          </Card>
+          </div>
 
           {/* Satisfaction */}
-          <Card className="p-6">
+          <div>
             <h3 className="font-semibold text-gray-900 mb-4">
-              Satisfacción general con el reto (1-5)
+              Satisfacción general (1-5)
             </h3>
             <div className="flex space-x-4">
               {[1, 2, 3, 4, 5].map((level) => (
                 <button
                   key={level}
-                  onClick={() => handleInputChange("satisfaction", level)}
+                  onClick={() => handleInputChange("satisfaccion_general", level)}
                   className={`w-12 h-12 rounded-full font-semibold transition-all duration-200 ${
-                    formData.satisfaction === level
+                    formData.satisfaccion_general === level
                       ? "bg-gradient-to-r from-primary to-secondary text-white scale-110"
                       : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                   }`}
@@ -497,20 +520,16 @@ const FinalMetrics = () => {
                 </button>
               ))}
             </div>
-            <div className="flex justify-between text-xs text-gray-600 mt-2">
-              <span>Muy insatisfecho</span>
-              <span>Muy satisfecho</span>
-            </div>
-          </Card>
+          </div>
 
           {/* Testimonial */}
-          <Card className="p-6">
+          <div>
             <h3 className="font-semibold text-gray-900 mb-4">
-              Comparte tu testimonio *
+              Testimonio *
             </h3>
             <textarea
-              value={formData.testimonial}
-              onChange={(e) => handleInputChange("testimonial", e.target.value)}
+              value={formData.testimonio}
+              onChange={(e) => handleInputChange("testimonio", e.target.value)}
               rows={6}
               className="w-full px-4 py-3 text-gray-900 bg-white border border-gray-200 rounded-xl transition-all duration-200 placeholder:text-gray-400 focus:outline-none focus:ring-4 focus:ring-purple-200 focus:border-primary"
               placeholder="Cuéntanos sobre tu experiencia: ¿qué lograste? ¿cómo te sientes? ¿qué fue lo más desafiante? ¿qué aprendiste?"
@@ -521,70 +540,49 @@ const FinalMetrics = () => {
               <label className="flex items-center space-x-3 cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={formData.allowTestimonial}
-                  onChange={(e) => handleInputChange("allowTestimonial", e.target.checked)}
+                  checked={formData.permiso_uso_testimonio}
+                  onChange={(e) => handleInputChange("permiso_uso_testimonio", e.target.checked)}
                   className="w-5 h-5 text-primary border-gray-300 rounded focus:ring-purple-200"
                 />
                 <span className="text-sm text-gray-700">
-                  Permito que este testimonio sea compartido de forma anónima para inspirar a otros participantes
+                  Permiso de uso: Autorizo compartir este testimonio de forma anónima
                 </span>
               </label>
             </div>
-          </Card>
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      {/* Header */}
-      <Card className="p-6 bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 text-white">
-        <div className="text-center">
-          <h1 className="font-display font-bold text-3xl mb-2">
-            ¡Felicitaciones! 🎉
-          </h1>
-          <p className="text-emerald-100">
-            Has completado 21 días de transformación - Registra tus resultados finales
-          </p>
+          </div>
         </div>
       </Card>
 
-      {/* Progress Bar */}
-      <Card className="p-6">
-        {renderProgressBar()}
-        
-        {/* Step Content */}
-        {currentStep === 1 && renderStep1()}
-        {currentStep === 2 && renderStep2()}
-        {currentStep === 3 && renderStep3()}
-      </Card>
-
-      {/* Navigation */}
-      <Card className="p-6">
-        <div className="flex justify-between">
-          <Button
-            variant="secondary"
-            onClick={handlePrevious}
-            disabled={currentStep === 1}
-          >
-            <ApperIcon name="ChevronLeft" className="h-4 w-4 mr-2" />
-            Anterior
-          </Button>
-
-          {currentStep < totalSteps ? (
-            <Button onClick={handleNext}>
-              Siguiente
-              <ApperIcon name="ChevronRight" className="h-4 w-4 ml-2" />
+      {/* Save Button */}
+      {!showComparison && (
+        <Card className="p-6">
+          <div className="text-center">
+            <Button 
+              onClick={handleSubmit} 
+              disabled={saving}
+              size="lg"
+            >
+              <ApperIcon name="Save" className="h-5 w-5 mr-2" />
+              {saving ? "Guardando..." : "Guardar Día 21"}
             </Button>
-          ) : (
-            <Button onClick={handleSubmit}>
-              <ApperIcon name="Trophy" className="h-4 w-4 mr-2" />
-              ¡Completar Reto 21D!
+          </div>
+        </Card>
+      )}
+
+      {/* Comparison Section */}
+      {showComparison && renderComparison()}
+
+      {/* Navigation Button */}
+      {showComparison && (
+        <Card className="p-6">
+          <div className="text-center">
+            <Button onClick={() => navigate("/progreso")} size="lg">
+              <ApperIcon name="BarChart" className="h-5 w-5 mr-2" />
+              Ver Mi Progreso Completo
             </Button>
-          )}
-        </div>
-      </Card>
+          </div>
+        </Card>
+      )}
     </div>
   );
 };

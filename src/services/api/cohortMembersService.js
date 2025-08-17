@@ -44,7 +44,7 @@ export const cohortMembersService = {
     return await this.updateMemberStatus(userId, { day0_completed: true });
   },
 
-  async markDay21Completed(userId = 1) {
+async markDay21Completed(userId = 1) {
     return await this.updateMemberStatus(userId, { day21_completed: true });
   },
 

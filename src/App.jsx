@@ -1,20 +1,20 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
-
-// Layout
-import Layout from "@/components/organisms/Layout";
-
-// Pages
-import Dashboard from "@/components/pages/Dashboard";
-import Calendar from "@/components/pages/Calendar";
-import DayPlan from "@/components/pages/DayPlan";
-import Habits from "@/components/pages/Habits";
 import Progress from "@/components/pages/Progress";
+import DayPlan from "@/components/pages/DayPlan";
+import Dashboard from "@/components/pages/Dashboard";
+import Habits from "@/components/pages/Habits";
+import DayZero from "@/components/pages/DayZero";
+import FinalMetrics from "@/components/pages/FinalMetrics";
 import Profile from "@/components/pages/Profile";
 import Onboarding from "@/components/pages/Onboarding";
-import FinalMetrics from "@/components/pages/FinalMetrics";
-import DayZero from "@/components/pages/DayZero";
+import Calendar from "@/components/pages/Calendar";
+import Layout from "@/components/organisms/Layout";
+
+// Layout
+
+// Pages
 
 function App() {
   return (
@@ -29,9 +29,11 @@ function App() {
 <Route path="dia/:dayNumber" element={<DayPlan />} />
 <Route path="habitos" element={<Habits />} />
 <Route path="progreso" element={<Progress />} />
+<Route path="progreso" element={<Progress />} />
 <Route path="perfil" element={<Profile />} />
 <Route path="onboarding" element={<Onboarding />} />
 <Route path="metricas-finales" element={<FinalMetrics />} />
+<Route path="dia-21" element={<FinalMetrics />} />
           </Route>
         </Routes>
 
