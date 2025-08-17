@@ -168,31 +168,31 @@ const Dashboard = () => {
 
         {todayHabits.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {todayHabits.slice(0, 4).map((habit) => (
+{todayHabits?.slice(0, 4).map((habit, index) => (
               <div
-                key={habit.id}
+                key={habit?.id || `habit-${index}`}
                 className="flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
-                onClick={() => handleQuickHabitToggle(habit.id)}
+                onClick={() => handleQuickHabitToggle(habit?.id)}
               >
                 <div className="flex items-center space-x-3">
                   <ApperIcon
-                    name={habit.status === "completed" ? "CheckCircle2" : "Circle"}
+                    name={habit?.status === "completed" ? "CheckCircle2" : "Circle"}
                     className={`h-5 w-5 ${
-                      habit.status === "completed" ? "text-emerald-500" : "text-gray-400"
+                      habit?.status === "completed" ? "text-emerald-500" : "text-gray-400"
                     }`}
                   />
                   <div>
-                    <h4 className="font-medium text-gray-900">{habit.name}</h4>
-                    <p className="text-sm text-gray-600">{habit.category}</p>
+                    <h4 className="font-medium text-gray-900">{habit?.name || 'Hábito sin nombre'}</h4>
+                    <p className="text-sm text-gray-600">{habit?.category || 'Sin categoría'}</p>
                   </div>
                 </div>
                 <Badge
-                  variant={habit.status === "completed" ? "success" : "default"}
+                  variant={habit?.status === "completed" ? "success" : "default"}
                 >
-                  {habit.status === "completed" ? "Completado" : "Pendiente"}
+                  {habit?.status === "completed" ? "Completado" : "Pendiente"}
                 </Badge>
               </div>
-            ))}
+            )) || []}
           </div>
         ) : (
           <div className="text-center py-8">
