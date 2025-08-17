@@ -14,6 +14,7 @@ import Progress from "@/components/pages/Progress";
 import Profile from "@/components/pages/Profile";
 import Onboarding from "@/components/pages/Onboarding";
 import FinalMetrics from "@/components/pages/FinalMetrics";
+import DayZero from "@/components/pages/DayZero";
 
 function App() {
   return (
@@ -22,14 +23,15 @@ function App() {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="calendario" element={<Calendar />} />
-            <Route path="dia/:dayNumber" element={<DayPlan />} />
-            <Route path="habitos" element={<Habits />} />
-            <Route path="progreso" element={<Progress />} />
-            <Route path="perfil" element={<Profile />} />
-            <Route path="onboarding" element={<Onboarding />} />
-            <Route path="metricas-finales" element={<FinalMetrics />} />
+<Route path="dashboard" element={<Dashboard />} />
+<Route path="calendario" element={<Calendar />} />
+<Route path="dia-0" element={<DayZero />} />
+<Route path="dia/:dayNumber" element={<DayPlan />} />
+<Route path="habitos" element={<Habits />} />
+<Route path="progreso" element={<Progress />} />
+<Route path="perfil" element={<Profile />} />
+<Route path="onboarding" element={<Onboarding />} />
+<Route path="metricas-finales" element={<FinalMetrics />} />
           </Route>
         </Routes>
 

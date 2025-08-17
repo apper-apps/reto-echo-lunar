@@ -1,21 +1,23 @@
 [
-  {
+{
     "Id": 1,
-    "userId": 1,
-    "day": 0,
-    "weight": 72.5,
-    "height": 165,
-    "waist": 88.5,
-    "hip": 98.2,
-    "bodyFat": 28.5,
-    "muscle": 32.8,
-    "visceralFat": 9,
-    "metabolicAge": 32,
-    "waterGlasses": 6,
-    "dailySteps": 7500,
-    "sleepHours": 7.5,
-    "caffeineSource": "cafe",
-    "initialNotes": "Me siento emocionada por comenzar este reto. Mi meta es perder 3-4 kg y mejorar mi energía diaria. Quiero crear hábitos que pueda mantener a largo plazo.",
-    "createdAt": "2024-01-15T10:30:00Z"
+    "user_id": 1,
+    "cohort_id": 1,
+    "phase": "inicio",
+    "peso_kg": 72.5,
+    "estatura_cm": 165,
+    "edad_anios": 28,
+    "cintura_cm": 88,
+    "cadera_cm": 98,
+    "body_fat_pct": 28.5,
+    "muscle_pct": 32.8,
+    "grasa_visceral": 9,
+    "edad_metabolica": 32,
+    "agua_vasos_promedio": 6,
+    "pasos_promedio": 7500,
+    "horas_sueno": 7.5,
+    "cafeina_fuente": ["Café"],
+    "imc": 26.6,
+    "created_at": "2024-01-15T10:30:00Z"
   }
 ]

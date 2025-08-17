@@ -115,7 +115,37 @@ export const userService = {
         evening: '18:00',
         night: '21:00'
       },
-      habitCompletion: true
+habitCompletion: true
+    };
+  },
+
+  async getDayZeroStatus() {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    const user = users.find(u => u.Id === 1);
+    if (!user) {
+      throw new Error("Usuario no encontrado");
+    }
+
+    return {
+      day0_completed: user.day0_completed || false,
+      day21_completed: user.day21_completed || false
+    };
+  },
+
+  async updateDayZeroStatus(completed = true) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    const userIndex = users.findIndex(u => u.Id === 1);
+    if (userIndex === -1) {
+      throw new Error("Usuario no encontrado");
+    }
+
+    users[userIndex].day0_completed = completed;
+    
+    return {
+      day0_completed: completed,
+      day21_completed: users[userIndex].day21_completed || false
     };
   }
 };

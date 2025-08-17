@@ -6,12 +6,18 @@ const NavigationTabs = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const tabs = [
+const tabs = [
     { 
       id: "dashboard", 
       label: "Inicio", 
       icon: "Home",
       path: "/dashboard" 
+    },
+    { 
+      id: "dia-0", 
+      label: "Día 0", 
+      icon: "Target",
+      path: "/dia-0" 
     },
     { 
       id: "calendario", 
@@ -39,9 +45,10 @@ const NavigationTabs = () => {
     }
   ];
 
-  const isActive = (path) => {
+const isActive = (path) => {
     return location.pathname === path || 
-           (path === "/calendario" && location.pathname.startsWith("/dia/"));
+           (path === "/calendario" && location.pathname.startsWith("/dia/")) ||
+           (path === "/dia-0" && location.pathname === "/dia-0");
   };
 
   return (

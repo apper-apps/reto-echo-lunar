@@ -16,8 +16,10 @@
       "objective": "Bajar grasa",
       "activityLevel": "Moderado",
       "healthConditions": "Ninguna condición relevante",
-      "phone": "+52-555-123-4567",
+"phone": "+52-555-123-4567",
       "email": "usuario@ejemplo.com"
-    }
+    },
+    "day0_completed": false,
+    "day21_completed": false
   }
 ]
