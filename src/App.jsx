@@ -30,6 +30,7 @@ function App() {
 <Route path="habitos" element={<Habits />} />
 <Route path="progreso" element={<Progress />} />
 <Route path="progreso" element={<Progress />} />
+<Route path="ranking" element={<Progress />} />
 <Route path="perfil" element={<Profile />} />
 <Route path="onboarding" element={<Onboarding />} />
 <Route path="metricas-finales" element={<FinalMetrics />} />

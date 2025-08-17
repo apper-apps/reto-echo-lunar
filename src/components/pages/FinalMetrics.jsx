@@ -166,8 +166,19 @@ const FinalMetrics = () => {
 
       // Mark day 21 as completed
       await cohortMembersService.markDay21Completed();
-
-      toast.success("¡Excelente! Tus resultados finales se guardaron.");
+toast.success("¡Excelente! Tus resultados finales se guardaron.");
+      
+      // Check for Day 21 bonus points eligibility
+      try {
+        const photos = await photosService.getUserFinalPhotos(1);
+        const finalPhotosCount = photos.filter(p => p.type === 'final').length;
+        
+        if (finalPhotosCount >= 2) {
+          toast.info("🎉 ¡Puntos extra! Subiste 2+ fotos finales y completaste la autoevaluación");
+        }
+      } catch (error) {
+        console.warn("Error checking bonus eligibility:", error);
+      }
       
       // Reload data to show comparison
       await loadInitialData();
@@ -576,10 +587,17 @@ const FinalMetrics = () => {
       {showComparison && (
         <Card className="p-6">
           <div className="text-center">
-            <Button onClick={() => navigate("/progreso")} size="lg">
-              <ApperIcon name="BarChart" className="h-5 w-5 mr-2" />
-              Ver Mi Progreso Completo
-            </Button>
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Button onClick={() => navigate("/progreso")} size="lg">
+                <ApperIcon name="BarChart" className="h-5 w-5 mr-2" />
+                Ver Mi Progreso Completo
+              </Button>
+              
+              <Button onClick={() => navigate("/progreso?showRanking=true")} size="lg" variant="secondary">
+                <ApperIcon name="Trophy" className="h-5 w-5 mr-2" />
+                Ver Ranking de Finalistas
+              </Button>
+            </div>
           </div>
         </Card>
       )}

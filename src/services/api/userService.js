@@ -119,6 +119,18 @@ habitCompletion: true
     };
   },
 
+  async getRoleType() {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    const user = users.find(u => u.Id === 1);
+    if (!user) {
+      throw new Error("Usuario no encontrado");
+    }
+
+    // Return role type from user data, default to 'Participante'
+    return user.role || user.profile?.role || 'Participante';
+  },
+
   async getDayZeroStatus() {
     await new Promise(resolve => setTimeout(resolve, 200));
     

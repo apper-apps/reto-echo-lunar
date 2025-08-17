@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ReactApexChart from "react-apexcharts";
-import ApperIcon from "@/components/ApperIcon";
-import Card from "@/components/atoms/Card";
-import Button from "@/components/atoms/Button";
-import Badge from "@/components/atoms/Badge";
-import MetricCard from "@/components/molecules/MetricCard";
-import ProgressRing from "@/components/molecules/ProgressRing";
-import Loading from "@/components/ui/Loading";
-import Error from "@/components/ui/Error";
 import { progressService } from "@/services/api/progressService";
 import { healthMetricsService } from "@/services/api/healthMetricsService";
+import ApperIcon from "@/components/ApperIcon";
+import Error from "@/components/ui/Error";
+import Loading from "@/components/ui/Loading";
+import MetricCard from "@/components/molecules/MetricCard";
+import ProgressRing from "@/components/molecules/ProgressRing";
+import Button from "@/components/atoms/Button";
+import Badge from "@/components/atoms/Badge";
+import Card from "@/components/atoms/Card";
 
 const Progress = () => {
   const navigate = useNavigate();
@@ -18,10 +18,11 @@ const Progress = () => {
   const [healthMetrics, setHealthMetrics] = useState(null);
   const [chartData, setChartData] = useState(null);
   const [selectedMetric, setSelectedMetric] = useState("weight");
+  const [userRanking, setUserRanking] = useState(null);
+  const [showRanking, setShowRanking] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  const loadProgressData = async () => {
+const loadProgressData = async () => {
     try {
       setLoading(true);
       setError("");
@@ -35,6 +36,19 @@ const Progress = () => {
       setProgressData(progress);
       setHealthMetrics(metrics);
       setChartData(chart);
+      
+      // Check if user completed the challenge (day 21) to show ranking
+      if (progress?.currentDay >= 21 || metrics?.day21) {
+        try {
+          const ranking = await progressService.getUserRanking();
+          setUserRanking(ranking);
+          setShowRanking(true);
+        } catch (rankingErr) {
+          console.warn("Could not load ranking data:", rankingErr);
+          setShowRanking(false);
+        }
+      }
+      
     } catch (err) {
       setError("Error al cargar los datos de progreso");
       console.error("Progress load error:", err);
@@ -142,6 +156,79 @@ const Progress = () => {
           </div>
         </div>
       </Card>
+
+{/* Ranking Section for Finalists */}
+      {showRanking && userRanking && (
+        <Card className="p-6 mb-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="font-display font-semibold text-xl">Ranking de Finalistas</h2>
+            <Badge variant="success">Reto Completado</Badge>
+          </div>
+          
+          {/* User Position */}
+          <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl border border-purple-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-gray-900">Tu Posición</h3>
+                <p className="text-sm text-gray-600">De {userRanking.totalParticipants} finalistas</p>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-purple-600">#{userRanking.position}</div>
+                <div className="text-sm text-gray-600">{userRanking.user.totalPoints} puntos</div>
+                {userRanking.user.bonusPoints > 0 && (
+                  <div className="text-xs text-emerald-600">+{userRanking.user.bonusPoints} bonus</div>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {/* Top 10 */}
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-4">Top 10 del Reto</h3>
+            <div className="space-y-3">
+              {userRanking.topTen.map((member, index) => (
+                <div 
+                  key={member.Id}
+                  className={`flex items-center justify-between p-3 rounded-lg ${
+                    member.Id === userRanking.user.Id 
+                      ? 'bg-purple-100 border-2 border-purple-300' 
+                      : 'bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                      index < 3 ? 'bg-gradient-to-r from-yellow-400 to-orange-400 text-white' : 'bg-gray-200 text-gray-700'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        {member.profile?.fullName || `Participante ${member.Id}`}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {member.totalPoints} puntos
+                        {member.bonusPoints > 0 && (
+                          <span className="text-emerald-600"> (+{member.bonusPoints} bonus)</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  {index < 3 && (
+                    <ApperIcon 
+                      name="Trophy" 
+                      className={`h-5 w-5 ${
+                        index === 0 ? 'text-yellow-500' : 
+                        index === 1 ? 'text-gray-400' : 
+                        'text-orange-600'
+                      }`} 
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Progress Rings */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

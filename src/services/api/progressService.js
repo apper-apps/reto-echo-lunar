@@ -107,6 +107,91 @@ export const progressService = {
       return JSON.parse(JSON.stringify(newAchievement));
     }
     
-    return null;
+return null;
+  },
+
+  // Day 21 bonus points calculation
+  async calculateRankingWithBonusPoints() {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    const { cohortMembersService } = await import("@/services/api/cohortMembersService");
+    const { photosService } = await import("@/services/api/photosService");
+    const { healthMetricsService } = await import("@/services/api/healthMetricsService");
+    
+    const members = await cohortMembersService.getAll();
+    const rankings = [];
+    
+    for (const member of members) {
+      let totalPoints = member.totalPoints || 0;
+      let bonusPoints = 0;
+      
+      // Check if Day 21 completed
+      if (member.currentDay >= 21) {
+        try {
+          // Check for final photos (≥2 required for bonus)
+          const photos = await photosService.getUserFinalPhotos(member.Id);
+          const finalPhotosCount = photos.filter(p => p.type === 'final').length;
+          
+          // Check for self-evaluation completion
+          const metrics = await healthMetricsService.getHealthMetrics(member.Id);
+          const hasCompletedSelfEvaluation = metrics.day21 && 
+            Object.keys(metrics.day21).length > 0;
+          
+          // Award bonus points if both conditions met
+          if (finalPhotosCount >= 2 && hasCompletedSelfEvaluation) {
+            bonusPoints = 50; // Extra points for completing everything
+            totalPoints += bonusPoints;
+          }
+        } catch (error) {
+          console.warn(`Error calculating bonus for member ${member.Id}:`, error);
+        }
+      }
+      
+      rankings.push({
+        ...member,
+        totalPoints,
+        bonusPoints,
+        finalRankingEligible: member.currentDay >= 21
+      });
+    }
+    
+    // Sort by total points (including bonus) descending
+    rankings.sort((a, b) => b.totalPoints - a.totalPoints);
+    
+    // Add ranking positions
+    rankings.forEach((member, index) => {
+      member.rankingPosition = index + 1;
+    });
+    
+    return rankings;
+  },
+
+  async getUserRanking(userId = 1) {
+    await new Promise(resolve => setTimeout(resolve, 250));
+    
+    const rankings = await this.calculateRankingWithBonusPoints();
+    const userRanking = rankings.find(r => r.Id === userId);
+    
+    if (!userRanking) {
+      throw new Error("Usuario no encontrado en el ranking");
+    }
+    
+    return {
+      user: userRanking,
+      position: userRanking.rankingPosition,
+      totalParticipants: rankings.length,
+      topTen: rankings.slice(0, 10)
+    };
+  },
+
+  async getTopRankings(limit = 10) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    const rankings = await this.calculateRankingWithBonusPoints();
+    return {
+      rankings: rankings.slice(0, limit),
+      totalParticipants: rankings.length,
+      lastUpdated: new Date().toISOString()
+    };
   }
 };
