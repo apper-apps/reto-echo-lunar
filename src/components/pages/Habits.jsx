@@ -272,13 +272,13 @@ const Habits = () => {
       {/* Habits List */}
       {filteredHabits.length > 0 ? (
         <div className="space-y-4">
-          {filteredHabits.map((habit) => (
-            <Card key={habit.id} className="p-1">
+{filteredHabits.map((habit, index) => (
+            <Card key={habit?.id ? `habit-${habit.id}` : `habit-${index}`} className="p-1">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <HabitToggle
                     habit={habit}
-                    status={habit.status}
+                    status={habit?.status}
                     onToggle={handleToggleHabit}
                   />
                 </div>
@@ -286,7 +286,7 @@ const Habits = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleDeleteHabit(habit.id)}
+                    onClick={() => handleDeleteHabit(habit?.id)}
                     className="text-red-600 hover:bg-red-50"
                   >
                     <ApperIcon name="Trash2" className="h-4 w-4" />
