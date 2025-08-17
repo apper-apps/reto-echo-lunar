@@ -10,26 +10,30 @@ import { userService } from "@/services/api/userService";
 import { toast } from "react-toastify";
 
 const Profile = () => {
-  const [userData, setUserData] = useState(null);
+const [userData, setUserData] = useState(null);
   const [profileData, setProfileData] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [notificationPreferences, setNotificationPreferences] = useState(null);
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
 
-  const loadUserData = async () => {
+const loadUserData = async () => {
     try {
       setLoading(true);
       setError("");
       
-      const [user, profile] = await Promise.all([
+      const [user, profile, notifications] = await Promise.all([
         userService.getCurrentUser(),
-        userService.getUserProfile()
+        userService.getUserProfile(),
+        userService.getNotificationPreferences()
       ]);
       
       setUserData(user);
       setProfileData(profile);
       setEditForm(profile || {});
+      setNotificationPreferences(notifications);
     } catch (err) {
       setError("Error al cargar los datos del perfil");
       console.error("Profile load error:", err);
@@ -42,7 +46,7 @@ const Profile = () => {
     loadUserData();
   }, []);
 
-  const handleSaveProfile = async (e) => {
+const handleSaveProfile = async (e) => {
     e.preventDefault();
     
     try {
@@ -52,6 +56,39 @@ const Profile = () => {
       toast.success("¡Perfil actualizado exitosamente!");
     } catch (err) {
       toast.error("Error al actualizar el perfil");
+    }
+  };
+
+  const handleNotificationToggle = async (type) => {
+    try {
+      const updatedPreferences = {
+        ...notificationPreferences,
+        [type]: !notificationPreferences[type]
+      };
+      
+      await userService.updateNotificationPreferences(updatedPreferences);
+      setNotificationPreferences(updatedPreferences);
+      toast.success("¡Configuración de notificaciones actualizada!");
+    } catch (err) {
+      toast.error("Error al actualizar las notificaciones");
+    }
+  };
+
+  const handleTimeChange = async (moment, time) => {
+    try {
+      const updatedPreferences = {
+        ...notificationPreferences,
+        times: {
+          ...notificationPreferences.times,
+          [moment]: time
+        }
+      };
+      
+      await userService.updateNotificationPreferences(updatedPreferences);
+      setNotificationPreferences(updatedPreferences);
+      toast.success("¡Horario de recordatorio actualizado!");
+    } catch (err) {
+      toast.error("Error al actualizar el horario");
     }
   };
 
@@ -362,21 +399,138 @@ const Profile = () => {
       </Card>
 
       {/* Account Settings */}
-      <Card className="p-6">
+<Card className="p-6">
         <h2 className="font-display font-semibold text-xl mb-4">Configuración de Cuenta</h2>
         
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-xl">
-            <div className="flex items-center space-x-4">
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <ApperIcon name="Bell" className="h-5 w-5 text-blue-600" />
+          <div className="border border-gray-200 rounded-xl overflow-hidden">
+            <div 
+              className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+              onClick={() => setShowNotificationSettings(!showNotificationSettings)}
+            >
+              <div className="flex items-center space-x-4">
+                <div className="bg-blue-100 p-3 rounded-lg">
+                  <ApperIcon name="Bell" className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-900">Notificaciones</h4>
+                  <p className="text-sm text-gray-600">Configurar recordatorios y alertas</p>
+                </div>
               </div>
-              <div>
-                <h4 className="font-medium text-gray-900">Notificaciones</h4>
-                <p className="text-sm text-gray-600">Recibir recordatorios diarios</p>
+              <div className="flex items-center space-x-2">
+                <Badge variant={notificationPreferences?.enabled ? "success" : "default"}>
+                  {notificationPreferences?.enabled ? "Activo" : "Inactivo"}
+                </Badge>
+                <ApperIcon 
+                  name={showNotificationSettings ? "ChevronUp" : "ChevronDown"} 
+                  className="h-4 w-4 text-gray-400" 
+                />
               </div>
             </div>
-            <Badge variant="success">Activo</Badge>
+
+            {showNotificationSettings && notificationPreferences && (
+              <div className="border-t border-gray-200 bg-gray-50 p-4">
+                <div className="space-y-6">
+                  {/* Master Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h5 className="font-medium text-gray-900">Habilitar notificaciones</h5>
+                      <p className="text-sm text-gray-600">Activar/desactivar todas las notificaciones</p>
+                    </div>
+                    <button
+                      onClick={() => handleNotificationToggle('enabled')}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        notificationPreferences.enabled ? 'bg-blue-600' : 'bg-gray-300'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          notificationPreferences.enabled ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {notificationPreferences.enabled && (
+                    <>
+                      {/* Daily Moment Reminders */}
+                      <div>
+                        <h5 className="font-medium text-gray-900 mb-3">Recordatorios de momentos diarios</h5>
+                        <div className="space-y-4">
+                          {[
+                            { key: 'morning', label: 'Mañana', icon: 'Sunrise', color: 'yellow' },
+                            { key: 'noon', label: 'Mediodía', icon: 'Sun', color: 'orange' },
+                            { key: 'evening', label: 'Tarde', icon: 'Sunset', color: 'pink' },
+                            { key: 'night', label: 'Noche', icon: 'Moon', color: 'purple' }
+                          ].map((moment) => (
+                            <div key={moment.key} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                              <div className="flex items-center space-x-3">
+                                <div className={`bg-${moment.color}-100 p-2 rounded-lg`}>
+                                  <ApperIcon name={moment.icon} className={`h-4 w-4 text-${moment.color}-600`} />
+                                </div>
+                                <div>
+                                  <span className="font-medium text-gray-900">{moment.label}</span>
+                                  <p className="text-xs text-gray-600">Recordatorio de reflexión</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-3">
+                                <Input
+                                  type="time"
+                                  value={notificationPreferences.times[moment.key] || ''}
+                                  onChange={(e) => handleTimeChange(moment.key, e.target.value)}
+                                  className="w-20 h-8 text-sm"
+                                  disabled={!notificationPreferences.dailyMoments[moment.key]}
+                                />
+                                <button
+                                  onClick={() => handleNotificationToggle(`dailyMoments.${moment.key}`)}
+                                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                                    notificationPreferences.dailyMoments[moment.key] ? 'bg-blue-600' : 'bg-gray-300'
+                                  }`}
+                                >
+                                  <span
+                                    className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                                      notificationPreferences.dailyMoments[moment.key] ? 'translate-x-5' : 'translate-x-1'
+                                    }`}
+                                  />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Habit Completion Alerts */}
+                      <div>
+                        <h5 className="font-medium text-gray-900 mb-3">Alertas de hábitos</h5>
+                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                          <div className="flex items-center space-x-3">
+                            <div className="bg-green-100 p-2 rounded-lg">
+                              <ApperIcon name="CheckCircle" className="h-4 w-4 text-green-600" />
+                            </div>
+                            <div>
+                              <span className="font-medium text-gray-900">Completar hábitos</span>
+                              <p className="text-xs text-gray-600">Notificaciones de progreso</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => handleNotificationToggle('habitCompletion')}
+                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                              notificationPreferences.habitCompletion ? 'bg-blue-600' : 'bg-gray-300'
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                                notificationPreferences.habitCompletion ? 'translate-x-5' : 'translate-x-1'
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-between p-4 border border-gray-200 rounded-xl">

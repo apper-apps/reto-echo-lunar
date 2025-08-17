@@ -9,10 +9,11 @@ import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
 import { habitService } from "@/services/api/habitService";
+import { userService } from "@/services/api/userService";
 import { toast } from "react-toastify";
 
 const Habits = () => {
-  const [habits, setHabits] = useState([]);
+const [habits, setHabits] = useState([]);
   const [filteredHabits, setFilteredHabits] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -25,7 +26,7 @@ const Habits = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
+  const [notificationPreferences, setNotificationPreferences] = useState(null);
   const categories = [
     { id: "all", label: "Todos", icon: "Grid3x3" },
     { id: "Salud", label: "Salud", icon: "Heart" },
@@ -50,9 +51,19 @@ const Habits = () => {
     }
   };
 
-  useEffect(() => {
+useEffect(() => {
     loadHabits();
+    loadNotificationSettings();
   }, []);
+
+  const loadNotificationSettings = async () => {
+    try {
+      const preferences = await userService.getNotificationPreferences();
+      setNotificationPreferences(preferences);
+    } catch (err) {
+      console.error("Error loading notification preferences:", err);
+    }
+  };
 
   useEffect(() => {
     let filtered = habits;
@@ -72,11 +83,22 @@ const Habits = () => {
     setFilteredHabits(filtered);
   }, [habits, selectedCategory, searchTerm]);
 
-  const handleToggleHabit = async (habitId) => {
+const handleToggleHabit = async (habitId) => {
     try {
       await habitService.toggleHabitStatus(habitId);
       await loadHabits(); // Reload to get updated status
-      toast.success("¡Hábito actualizado!");
+      
+      // Show notification if habit completion alerts are enabled
+      if (notificationPreferences?.enabled && notificationPreferences?.habitCompletion) {
+        const habit = habits.find(h => h.Id === habitId);
+        if (habit) {
+          toast.success(`¡Hábito "${habit.name}" completado! 🎉`);
+        } else {
+          toast.success("¡Hábito actualizado!");
+        }
+      } else {
+        toast.success("¡Hábito actualizado!");
+      }
     } catch (err) {
       toast.error("Error al actualizar el hábito");
     }

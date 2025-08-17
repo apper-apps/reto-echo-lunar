@@ -57,5 +57,65 @@ export const userService = {
     };
     
     return JSON.parse(JSON.stringify(users[userIndex]));
+  },
+
+  async getNotificationPreferences() {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    const user = users.find(u => u.Id === 1);
+    if (!user) {
+      throw new Error("Usuario no encontrado");
+    }
+
+    // Return notification preferences or defaults
+    const notifications = user.notificationPreferences || this.getDefaultNotificationSettings();
+    return JSON.parse(JSON.stringify(notifications));
+  },
+
+  async updateNotificationPreferences(preferences) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    const userIndex = users.findIndex(u => u.Id === 1);
+    if (userIndex === -1) {
+      throw new Error("Usuario no encontrado");
+    }
+
+    // Handle nested property updates (e.g., 'dailyMoments.morning')
+    let updatedPreferences = { ...users[userIndex].notificationPreferences };
+    
+    Object.keys(preferences).forEach(key => {
+      if (key.includes('.')) {
+        const [parent, child] = key.split('.');
+        updatedPreferences[parent] = {
+          ...updatedPreferences[parent],
+          [child]: preferences[key]
+        };
+      } else {
+        updatedPreferences[key] = preferences[key];
+      }
+    });
+
+    users[userIndex].notificationPreferences = updatedPreferences;
+    
+    return JSON.parse(JSON.stringify(updatedPreferences));
+  },
+
+  getDefaultNotificationSettings() {
+    return {
+      enabled: true,
+      dailyMoments: {
+        morning: true,
+        noon: true,
+        evening: true,
+        night: true
+      },
+      times: {
+        morning: '07:00',
+        noon: '12:00',
+        evening: '18:00',
+        night: '21:00'
+      },
+      habitCompletion: true
+    };
   }
 };
