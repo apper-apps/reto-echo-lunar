@@ -263,11 +263,11 @@ const DayPlan = () => {
       <div className="space-y-6">
         <h2 className="font-display font-semibold text-xl">Plan del Día</h2>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {dayData?.morning && renderSectionCard("morning", dayData.morning)}
-          {dayData?.midday && renderSectionCard("midday", dayData.midday)}
-          {dayData?.afternoon && renderSectionCard("afternoon", dayData.afternoon)}
-          {dayData?.night && renderSectionCard("night", dayData.night)}
+<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {dayData?.morning && <div key="morning">{renderSectionCard("morning", dayData.morning)}</div>}
+          {dayData?.midday && <div key="midday">{renderSectionCard("midday", dayData.midday)}</div>}
+          {dayData?.afternoon && <div key="afternoon">{renderSectionCard("afternoon", dayData.afternoon)}</div>}
+          {dayData?.night && <div key="night">{renderSectionCard("night", dayData.night)}</div>}
         </div>
       </div>
 
