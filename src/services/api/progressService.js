@@ -58,7 +58,7 @@ export const progressService = {
       categories: ["Día 0", "Día 7", "Día 14", "Día 21"],
       series: [
         {
-          name: "Peso (kg)",
+name: "Peso (kg)",
           data: [72.5, 71.8, 70.9, 69.5]
         },
         {

@@ -17,7 +17,7 @@ const Progress = () => {
   const [progressData, setProgressData] = useState(null);
   const [healthMetrics, setHealthMetrics] = useState(null);
   const [chartData, setChartData] = useState(null);
-  const [selectedMetric, setSelectedMetric] = useState("weight");
+const [selectedMetric, setSelectedMetric] = useState("peso_kg");
   const [userRanking, setUserRanking] = useState(null);
   const [showRanking, setShowRanking] = useState(false);
   const [userRole, setUserRole] = useState(null);
@@ -31,7 +31,7 @@ const loadProgressData = async () => {
       
       const [progress, metrics, chart] = await Promise.all([
         progressService.getUserProgress(),
-        healthMetricsService.getHealthMetrics(),
+healthMetricsService.getHealthMetrics(),
         progressService.getProgressChart()
       ]);
       
@@ -66,7 +66,7 @@ const loadProgressData = async () => {
   if (loading) return <Loading />;
   if (error) return <Error message={error} onRetry={loadProgressData} />;
 
-  const getMetricChange = (initial, current) => {
+const getMetricChange = (initial, current) => {
     if (!initial || !current) return null;
     
     const change = current - initial;
@@ -74,7 +74,7 @@ const loadProgressData = async () => {
     
     return {
       value: `${change >= 0 ? '+' : ''}${change.toFixed(1)} (${percentage}%)`,
-      type: selectedMetric === "weight" ? (change < 0 ? "positive" : "negative") : (change > 0 ? "positive" : "negative")
+      type: ["peso_kg", "cintura_cm", "cadera_cm", "body_fat_pct"].includes(selectedMetric) ? (change < 0 ? "positive" : "negative") : (change > 0 ? "positive" : "negative")
     };
   };
 
@@ -119,11 +119,11 @@ const loadProgressData = async () => {
     tooltip: {
       y: {
         formatter: (val, opts) => {
-          const suffixes = {
-            weight: " kg",
-            waist: " cm",
-            hip: " cm",
-            bodyFat: "%"
+const suffixes = {
+            peso_kg: " kg",
+            cintura_cm: " cm",
+            cadera_cm: " cm",
+            body_fat_pct: "%"
           };
           return val + (suffixes[selectedMetric] || "");
         }
@@ -134,10 +134,10 @@ const loadProgressData = async () => {
   const chartSeries = chartData?.series || [];
 
   const metrics = [
-    { key: "weight", label: "Peso", unit: "kg", icon: "Scale" },
-    { key: "waist", label: "Cintura", unit: "cm", icon: "Move" },
-    { key: "hip", label: "Cadera", unit: "cm", icon: "Move" },
-    { key: "bodyFat", label: "% Grasa", unit: "%", icon: "Activity" }
+{ key: "peso_kg", label: "Peso", unit: "kg", icon: "Scale" },
+    { key: "cintura_cm", label: "Cintura", unit: "cm", icon: "Move" },
+    { key: "cadera_cm", label: "Cadera", unit: "cm", icon: "Move" },
+    { key: "body_fat_pct", label: "% Grasa", unit: "%", icon: "Activity" }
   ];
 
   return (
@@ -289,7 +289,7 @@ const loadProgressData = async () => {
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {metrics.map((metric) => {
               const initial = healthMetrics.day0?.[metric.key];
               const current = healthMetrics.day21?.[metric.key];
@@ -317,7 +317,7 @@ const loadProgressData = async () => {
           <h3 className="font-display font-semibold text-lg">Evolución Temporal</h3>
           
           <div className="flex space-x-2">
-            {metrics.map((metric) => (
+{metrics.map((metric) => (
               <Button
                 key={metric.key}
                 size="sm"
@@ -425,7 +425,7 @@ const loadProgressData = async () => {
         </Card>
 
         {/* Finalists Ranking Button - Only visible for Coach/Admin */}
-        {userRole && (userRole === 'Coach' || userRole === 'Admin') && (
+{userRole && (userRole === 'Coach' || userRole === 'Admin') && (
           <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate("/ranking-finalistas")}>
             <div className="flex items-center space-x-4">
               <div className="bg-gradient-to-r from-yellow-100 to-orange-100 p-3 rounded-lg">
