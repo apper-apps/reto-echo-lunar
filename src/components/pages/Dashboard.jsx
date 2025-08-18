@@ -1,18 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import ApperIcon from "@/components/ApperIcon";
-import Card from "@/components/atoms/Card";
-import Button from "@/components/atoms/Button";
-import Badge from "@/components/atoms/Badge";
-import MetricCard from "@/components/molecules/MetricCard";
-import ProgressRing from "@/components/molecules/ProgressRing";
-import Loading from "@/components/ui/Loading";
-import Error from "@/components/ui/Error";
+import CreateChallengeModal from "@/components/molecules/CreateChallengeModal";
 import { userService } from "@/services/api/userService";
 import { progressService } from "@/services/api/progressService";
 import { habitService } from "@/services/api/habitService";
 import { miniChallengeService } from "@/services/api/miniChallengeService";
 import { toast } from "react-toastify";
+import ApperIcon from "@/components/ApperIcon";
+import Error from "@/components/ui/Error";
+import Loading from "@/components/ui/Loading";
+import MetricCard from "@/components/molecules/MetricCard";
+import ProgressRing from "@/components/molecules/ProgressRing";
+import Button from "@/components/atoms/Button";
+import Badge from "@/components/atoms/Badge";
+import Card from "@/components/atoms/Card";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -80,8 +81,19 @@ const loadDashboardData = async () => {
     } catch (err) {
       toast.error("Error al actualizar el progreso");
     }
-  };
+};
 
+  const handleCreateChallenge = async (challengeData) => {
+    try {
+      await miniChallengeService.createChallenge(challengeData);
+      await loadDashboardData(); // Reload to get updated data
+      setShowCreateModal(false);
+      toast.success("¡Mini-reto creado exitosamente! 🎯");
+    } catch (err) {
+      toast.error("Error al crear el mini-reto");
+    }
+  };
+const [showCreateModal, setShowCreateModal] = useState(false);
   useEffect(() => {
     loadDashboardData();
   }, []);
@@ -248,16 +260,33 @@ const loadDashboardData = async () => {
       </Card>
 
 {/* Mini-Challenges Section */}
-      <Card className="p-6">
+<Card className="p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-display font-bold text-xl text-gray-900">
             🏆 Mini-Retos Semanales
-            </h2>
+          </h2>
+          <div className="flex items-center space-x-3">
             <Badge variant="secondary" className="bg-gradient-to-r from-amber-100 to-orange-100 text-amber-800">
               ¡Puntos Extra!
             </Badge>
+            <Button
+              size="sm"
+              onClick={() => setShowCreateModal(true)}
+              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+            >
+              <ApperIcon name="Plus" className="h-4 w-4 mr-2" />
+              Crear Reto
+            </Button>
           </div>
+        </div>
 
+{/* Create Challenge Modal */}
+        {showCreateModal && (
+          <CreateChallengeModal 
+            onClose={() => setShowCreateModal(false)}
+            onSuccess={handleCreateChallenge}
+          />
+        )}
           {/* User's Active Challenges */}
           {userMiniChallenges.length > 0 && (
             <div className="mb-6">
