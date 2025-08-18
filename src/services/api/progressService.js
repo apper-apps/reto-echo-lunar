@@ -1,7 +1,4 @@
 import progressData from "@/services/mockData/progress.json";
-import React from "react";
-import Error from "@/components/ui/Error";
-
 let progress = [...progressData];
 
 export const progressService = {
@@ -88,6 +85,47 @@ export const progressService = {
     }
     
     return points;
+},
+  async addMiniChallengePoints(challengeId, points) {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    const progressIndex = progress.findIndex(p => p.userId === 1);
+    if (progressIndex !== -1) {
+      // Add points to total
+      progress[progressIndex].totalPoints += points;
+      
+      // Track mini-challenge bonus points separately
+      if (!progress[progressIndex].miniChallengePoints) {
+        progress[progressIndex].miniChallengePoints = 0;
+      }
+      progress[progressIndex].miniChallengePoints += points;
+      
+      return {
+        totalPoints: progress[progressIndex].totalPoints,
+        miniChallengePoints: progress[progressIndex].miniChallengePoints
+      };
+    }
+    
+    return { totalPoints: points, miniChallengePoints: points };
+  },
+
+  async getMiniChallengeStats() {
+    await new Promise(resolve => setTimeout(resolve, 150));
+    
+    const progressIndex = progress.findIndex(p => p.userId === 1);
+    if (progressIndex !== -1) {
+      return {
+        totalMiniChallengePoints: progress[progressIndex].miniChallengePoints || 0,
+        completedChallenges: progress[progressIndex].completedMiniChallenges || 0,
+        activeChallenges: progress[progressIndex].activeMiniChallenges || 0
+      };
+    }
+    
+    return {
+      totalMiniChallengePoints: 0,
+      completedChallenges: 0,
+      activeChallenges: 0
+    };
   },
 
   async unlockAchievement(achievementData) {
@@ -98,8 +136,7 @@ export const progressService = {
       const maxId = progress[progressIndex].achievements.length > 0 
         ? Math.max(...progress[progressIndex].achievements.map(a => a.id)) 
         : 0;
-      
-      const newAchievement = {
+const newAchievement = {
         id: maxId + 1,
         ...achievementData,
         unlockedAt: new Date().toISOString()
@@ -109,7 +146,7 @@ export const progressService = {
       return JSON.parse(JSON.stringify(newAchievement));
     }
     
-return null;
+    return null;
   },
 
   // Day 21 bonus points calculation
@@ -187,8 +224,6 @@ return null;
   },
 
   async getTopRankings(limit = 10) {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
 const rankings = await this.calculateRankingWithBonusPoints();
     return {
       rankings: rankings.slice(0, limit),
@@ -207,7 +242,7 @@ const rankings = await this.calculateRankingWithBonusPoints();
     return {
       success: true,
       message: 'Ranking recalculado exitosamente',
-      timestamp: new Date().toISOString()
-};
+timestamp: new Date().toISOString()
+    };
   }
 };

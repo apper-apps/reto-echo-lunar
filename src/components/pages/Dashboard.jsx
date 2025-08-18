@@ -11,35 +11,74 @@ import Error from "@/components/ui/Error";
 import { userService } from "@/services/api/userService";
 import { progressService } from "@/services/api/progressService";
 import { habitService } from "@/services/api/habitService";
+import { miniChallengeService } from "@/services/api/miniChallengeService";
 import { toast } from "react-toastify";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [userData, setUserData] = useState(null);
+const [userData, setUserData] = useState(null);
   const [progressData, setProgressData] = useState(null);
   const [todayHabits, setTodayHabits] = useState([]);
+  const [activeMiniChallenges, setActiveMiniChallenges] = useState([]);
+  const [userMiniChallenges, setUserMiniChallenges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const loadDashboardData = async () => {
+const loadDashboardData = async () => {
     try {
       setLoading(true);
       setError("");
       
-      const [user, progress, habits] = await Promise.all([
+      const [user, progress, habits, activeChallenges, userChallenges] = await Promise.all([
         userService.getCurrentUser(),
         progressService.getUserProgress(),
-        habitService.getTodayHabits()
+        habitService.getTodayHabits(),
+        miniChallengeService.getActiveChallenges(),
+        miniChallengeService.getUserActiveChallenges()
       ]);
       
       setUserData(user);
       setProgressData(progress);
       setTodayHabits(habits);
+      setActiveMiniChallenges(activeChallenges);
+      setUserMiniChallenges(userChallenges);
     } catch (err) {
       setError("Error al cargar los datos del dashboard");
       console.error("Dashboard load error:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleJoinMiniChallenge = async (challengeId) => {
+    try {
+      await miniChallengeService.joinChallenge(challengeId);
+      await loadDashboardData(); // Reload to get updated data
+      toast.success("¡Te has unido al mini-reto! 🎯");
+    } catch (err) {
+      toast.error("Error al unirse al mini-reto");
+    }
+  };
+
+  const handleLeaveMiniChallenge = async (challengeId) => {
+    if (window.confirm("¿Estás seguro de que quieres abandonar este mini-reto?")) {
+      try {
+        await miniChallengeService.leaveChallenge(challengeId);
+        await loadDashboardData();
+        toast.success("Has abandonado el mini-reto");
+      } catch (err) {
+        toast.error("Error al abandonar el mini-reto");
+      }
+    }
+  };
+
+  const handleUpdateChallengeProgress = async (challengeId, progress) => {
+    try {
+      await miniChallengeService.updateProgress(challengeId, progress);
+      await loadDashboardData();
+      toast.success("Progreso actualizado!");
+    } catch (err) {
+      toast.error("Error al actualizar el progreso");
     }
   };
 
@@ -204,9 +243,156 @@ const Dashboard = () => {
             >
               Configurar Hábitos
             </Button>
-          </div>
+</div>
         )}
       </Card>
+
+      {/* Mini-Challenges Section */}
+      {(activeMiniChallenges.length > 0 || userMiniChallenges.length > 0) && (
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="font-display font-bold text-xl text-gray-900">
+              🏆 Mini-Retos Semanales
+            </h2>
+            <Badge variant="secondary" className="bg-gradient-to-r from-amber-100 to-orange-100 text-amber-800">
+              ¡Puntos Extra!
+            </Badge>
+          </div>
+
+          {/* User's Active Challenges */}
+          {userMiniChallenges.length > 0 && (
+            <div className="mb-6">
+              <h3 className="font-semibold text-gray-800 mb-3">Tus Mini-Retos Activos</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {userMiniChallenges.map((challenge) => (
+                  <Card key={challenge.Id} className="p-4 bg-gradient-to-r from-emerald-50 to-blue-50 border-emerald-200">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h4 className="font-semibold text-gray-900">{challenge.title}</h4>
+                        <p className="text-sm text-gray-600 mt-1">{challenge.description}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleLeaveMiniChallenge(challenge.Id)}
+                        className="text-red-600 hover:bg-red-50"
+                      >
+                        <ApperIcon name="X" className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Progreso</span>
+                        <span className="font-medium">{challenge.userProgress || 0}/{challenge.target} {challenge.unit}</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-emerald-500 to-blue-500 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${Math.min(((challenge.userProgress || 0) / challenge.target) * 100, 100)}%` }}
+                        ></div>
+                      </div>
+                      <div className="flex justify-between items-center mt-3">
+                        <div className="flex items-center space-x-2">
+                          <ApperIcon name="Calendar" className="h-4 w-4 text-gray-500" />
+                          <span className="text-xs text-gray-500">{challenge.daysRemaining} días restantes</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <ApperIcon name="Coins" className="h-4 w-4 text-amber-500" />
+                          <span className="text-xs font-medium text-amber-600">+{challenge.pointsReward} pts</span>
+                        </div>
+                      </div>
+                      
+                      {challenge.type === 'incremental' && (
+                        <div className="flex space-x-2 mt-3">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => handleUpdateChallengeProgress(challenge.Id, (challenge.userProgress || 0) + 1)}
+                            className="flex-1"
+                          >
+                            <ApperIcon name="Plus" className="h-3 w-3 mr-1" />
+                            +1
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => handleUpdateChallengeProgress(challenge.Id, Math.max((challenge.userProgress || 0) - 1, 0))}
+                            className="flex-1"
+                          >
+                            <ApperIcon name="Minus" className="h-3 w-3 mr-1" />
+                            -1
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Available Challenges */}
+          {activeMiniChallenges.length > 0 && (
+            <div>
+              <h3 className="font-semibold text-gray-800 mb-3">Mini-Retos Disponibles</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {activeMiniChallenges
+                  .filter(challenge => !userMiniChallenges.some(uc => uc.Id === challenge.Id))
+                  .slice(0, 4)
+                  .map((challenge) => (
+                  <Card key={challenge.Id} className="p-4 hover:shadow-lg transition-shadow">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <h4 className="font-semibold text-gray-900">{challenge.title}</h4>
+                          <Badge variant="primary" className="text-xs">
+                            {challenge.difficulty}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-gray-600">{challenge.description}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-600">Meta: {challenge.target} {challenge.unit}</span>
+                        <div className="flex items-center space-x-1">
+                          <ApperIcon name="Coins" className="h-4 w-4 text-amber-500" />
+                          <span className="font-medium text-amber-600">+{challenge.pointsReward} pts</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center space-x-2">
+                          <ApperIcon name="Calendar" className="h-4 w-4 text-gray-500" />
+                          <span className="text-xs text-gray-500">{challenge.duration} días</span>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => handleJoinMiniChallenge(challenge.Id)}
+                          className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600"
+                        >
+                          <ApperIcon name="Plus" className="h-3 w-3 mr-1" />
+                          Unirse
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+              
+              {activeMiniChallenges.filter(challenge => !userMiniChallenges.some(uc => uc.Id === challenge.Id)).length > 4 && (
+                <div className="text-center mt-4">
+                  <Button variant="secondary" size="sm">
+                    Ver todos los mini-retos
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </Card>
+      )}
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
