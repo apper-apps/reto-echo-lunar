@@ -4,15 +4,16 @@ let cohortMembers = [
     Id: 1,
     user_id: 1,
     cohort_id: 1,
-    day0_completed: false,
+    day0_completed: true, // Enable for Day 21 access
     day21_completed: false,
+    day21_completed_at: null,
     adherence_pct: 0.0,
     created_at: "2024-01-15T10:00:00Z"
   }
 ];
 
 export const cohortMembersService = {
-  async getMemberStatus(userId = 1) {
+async getMemberStatus(userId = 1) {
     await new Promise(resolve => setTimeout(resolve, 200));
     
     const member = cohortMembers.find(m => m.user_id === userId);
@@ -45,7 +46,10 @@ export const cohortMembersService = {
   },
 
 async markDay21Completed(userId = 1) {
-    return await this.updateMemberStatus(userId, { day21_completed: true });
+    return await this.updateMemberStatus(userId, { 
+      day21_completed: true, 
+      day21_completed_at: new Date().toISOString() 
+    });
   },
 
   async updateAdherence(userId = 1, adherencePercentage) {

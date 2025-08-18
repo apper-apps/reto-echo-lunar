@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import ApperIcon from "@/components/ApperIcon";
-import Card from "@/components/atoms/Card";
-import Button from "@/components/atoms/Button";
-import Input from "@/components/atoms/Input";
-import Badge from "@/components/atoms/Badge";
-import Loading from "@/components/ui/Loading";
 import { healthMetricsService } from "@/services/api/healthMetricsService";
 import { photosService } from "@/services/api/photosService";
 import { cohortMembersService } from "@/services/api/cohortMembersService";
 import { toast } from "react-toastify";
+import ApperIcon from "@/components/ApperIcon";
+import Loading from "@/components/ui/Loading";
+import Input from "@/components/atoms/Input";
+import Button from "@/components/atoms/Button";
+import Badge from "@/components/atoms/Badge";
+import Card from "@/components/atoms/Card";
 
 const FinalMetrics = () => {
   const navigate = useNavigate();
@@ -46,13 +46,13 @@ const FinalMetrics = () => {
     perfil: null
   });
 
-  const habitOptions = [
-    "Hidratación adecuada",
-    "Sueño reparador", 
-    "Actividad física regular",
-    "Alimentación consciente",
-    "Manejo del estrés"
-  ];
+  // Access control state
+  const [accessControl, setAccessControl] = useState({
+    canEdit: false,
+    daysElapsed: 0,
+    availableDate: null,
+    userRole: 'Participante'
+  });
 
   const loadInitialData = async () => {
     try {
@@ -60,6 +60,9 @@ const FinalMetrics = () => {
       const metrics = await healthMetricsService.getHealthMetrics();
       setInitialMetrics(metrics.day0);
       setFinalMetrics(metrics.day21);
+      
+      // Load access control data
+      await checkAccessControl();
       
       // If final metrics already exist, show comparison
       if (metrics.day21) {
@@ -75,7 +78,12 @@ const FinalMetrics = () => {
           edad_metabolica: metrics.day21.edad_metabolica?.toString() || "",
           agua_vasos_promedio: metrics.day21.agua_vasos_promedio?.toString() || "",
           pasos_promedio: metrics.day21.pasos_promedio?.toString() || "",
-          horas_sueno: metrics.day21.horas_sueno?.toString() || ""
+          horas_sueno: metrics.day21.horas_sueno?.toString() || "",
+          energia_percibida: metrics.day21.energia_percibida || 3,
+          habitos_mantener: metrics.day21.habitos_mantener || [],
+          satisfaccion_general: metrics.day21.satisfaccion_general || 3,
+          testimonio: metrics.day21.testimonio || "",
+          permiso_uso_testimonio: metrics.day21.permiso_uso_testimonio || false
         }));
       }
     } catch (err) {
@@ -86,23 +94,79 @@ const FinalMetrics = () => {
     }
   };
 
+  const checkAccessControl = async () => {
+    try {
+      // Get user role
+      const { userService } = await import("@/services/api/userService");
+      const userRole = await userService.getRoleType();
+      
+      // Get cohort member status
+      const memberStatus = await cohortMembersService.getMemberStatus();
+      
+      // Mock cohort start date - in real app this would come from cohort service
+      const cohortStartDate = new Date('2024-01-15'); // Example start date
+      const today = new Date();
+      
+      // Calculate days elapsed
+      const timeDiff = today.getTime() - cohortStartDate.getTime();
+      const daysElapsed = Math.floor(timeDiff / (1000 * 3600 * 24)) + 1;
+      
+      // Calculate day 21 availability date
+      const availableDate = new Date(cohortStartDate);
+      availableDate.setDate(availableDate.getDate() + 20);
+      
+      // Check if can edit: days_elapsed >= 21 AND day0_completed = true
+      const canEdit = daysElapsed >= 21 && memberStatus.day0_completed && userRole === 'Participante';
+      
+      setAccessControl({
+        canEdit,
+        daysElapsed,
+        availableDate: availableDate.toLocaleDateString('es-MX', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        }),
+        userRole
+      });
+      
+    } catch (err) {
+      console.error("Access control check error:", err);
+      // Default to restricted access on error
+      setAccessControl(prev => ({ ...prev, canEdit: false }));
+    }
+  };
+
   useEffect(() => {
     loadInitialData();
   }, []);
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   const handlePhotoUpload = (photoType, file) => {
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPhotos(prev => ({ ...prev, [photoType]: e.target.result }));
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setPhotos(prev => ({
+        ...prev,
+        [photoType]: e.target.result
+      }));
+    };
+    reader.readAsDataURL(file);
   };
+
+  const habitOptions = [
+    "Hidratación adecuada",
+    "Sueño reparador",
+    "Actividad física regular", 
+    "Alimentación equilibrada",
+    "Manejo del estrés"
+  ];
 
   const handleHabitToggle = (habit) => {
     setFormData(prev => ({
@@ -114,21 +178,51 @@ const FinalMetrics = () => {
   };
 
   const validateForm = () => {
-    const requiredFields = ["peso_kg", "cintura_cm", "cadera_cm"];
-    const hasRequiredFields = requiredFields.every(field => 
-      formData[field] && formData[field].trim() !== ""
-    );
+    const errors = [];
     
-    const hasTestimonial = formData.testimonio.trim() !== "";
+    // Required fields validation
+    if (!formData.peso_kg || parseFloat(formData.peso_kg) < 30 || parseFloat(formData.peso_kg) > 300) {
+      errors.push("Introduce un valor entre 30.0 y 300.0 kg para el peso.");
+    }
     
-    return hasRequiredFields && hasTestimonial;
+    if (!formData.cintura_cm || parseInt(formData.cintura_cm) < 40 || parseInt(formData.cintura_cm) > 200) {
+      errors.push("Introduce un valor entre 40 y 200 cm para la cintura.");
+    }
+    
+    if (!formData.cadera_cm || parseInt(formData.cadera_cm) < 40 || parseInt(formData.cadera_cm) > 200) {
+      errors.push("Introduce un valor entre 40 y 200 cm para la cadera.");
+    }
+    
+    if (formData.body_fat_pct && (parseFloat(formData.body_fat_pct) < 0 || parseFloat(formData.body_fat_pct) > 70)) {
+      errors.push("Introduce un porcentaje válido (0 a 70) para la grasa corporal.");
+    }
+    
+    if (formData.muscle_pct && (parseFloat(formData.muscle_pct) < 10 || parseFloat(formData.muscle_pct) > 70)) {
+      errors.push("Introduce un porcentaje válido (10 a 70) para el músculo.");
+    }
+    
+    if (formData.grasa_visceral && (parseInt(formData.grasa_visceral) < 1 || parseInt(formData.grasa_visceral) > 30)) {
+      errors.push("Introduce un valor entero válido (1 a 30) para la grasa visceral.");
+    }
+    
+    if (formData.edad_metabolica && (parseInt(formData.edad_metabolica) < 10 || parseInt(formData.edad_metabolica) > 100)) {
+      errors.push("Introduce un valor entero válido (10 a 100) para la edad metabólica.");
+    }
+    
+    if (!formData.testimonio.trim()) {
+      errors.push("El testimonio es requerido.");
+    }
+    
+    if (errors.length > 0) {
+      toast.error(errors[0]); // Show first error
+      return false;
+    }
+    
+    return true;
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) {
-      toast.error("Por favor completa todos los campos requeridos");
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
       setSaving(true);
@@ -166,19 +260,13 @@ const FinalMetrics = () => {
 
       // Mark day 21 as completed
       await cohortMembersService.markDay21Completed();
-toast.success("¡Excelente! Tus resultados finales se guardaron.");
       
-      // Check for Day 21 bonus points eligibility
-      try {
-        const photos = await photosService.getUserFinalPhotos(1);
-        const finalPhotosCount = photos.filter(p => p.type === 'final').length;
-        
-        if (finalPhotosCount >= 2) {
-          toast.info("🎉 ¡Puntos extra! Subiste 2+ fotos finales y completaste la autoevaluación");
-        }
-      } catch (error) {
-        console.warn("Error checking bonus eligibility:", error);
-      }
+      toast.success("¡Excelente! Tus resultados del Día 21 se guardaron correctamente.");
+      
+      // Show confetti effect (simple version)
+      setTimeout(() => {
+        toast.info("🎉 ¡Felicitaciones por completar tu reto de 21 días!");
+      }, 1000);
       
       // Reload data to show comparison
       await loadInitialData();
@@ -201,19 +289,19 @@ toast.success("¡Excelente! Tus resultados finales se guardaron.");
     if (!initial || !final) return null;
     
     const change = final - initial;
-    const percentage = Math.abs((change / initial) * 100);
+    const percentage = Math.abs((change / initial) * 100).toFixed(1);
     
-    // For weight, body fat, visceral fat, metabolic age, and waist/hip - decrease is good
-    const positiveChange = ["peso_kg", "body_fat_pct", "grasa_visceral", "edad_metabolica", "cintura_cm", "cadera_cm"].includes(field)
-      ? change < 0
+    // For weight-related metrics, negative change is positive
+    const isPositiveChange = ["peso_kg", "cintura_cm", "cadera_cm", "body_fat_pct", "grasa_visceral", "edad_metabolica"].includes(field) 
+      ? change < 0 
       : change > 0;
-
+    
     return {
       initial,
       final,
       change: change.toFixed(1),
-      percentage: percentage.toFixed(1),
-      isPositive: positiveChange
+      percentage,
+      isPositive: isPositiveChange
     };
   };
 
@@ -232,7 +320,7 @@ toast.success("¡Excelente! Tus resultados finales se guardaron.");
     return (
       <Card className="p-6">
         <h3 className="font-display font-bold text-2xl text-gray-900 mb-6">
-          Tu Progreso
+          Tu Progreso - Comparativa Día 0 vs Día 21
         </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -293,6 +381,9 @@ toast.success("¡Excelente! Tus resultados finales se guardaron.");
 
   if (loading) return <Loading />;
 
+  const isReadOnlyMode = !accessControl.canEdit && accessControl.userRole === 'Participante';
+  const canViewRanking = ['Coach', 'Admin'].includes(accessControl.userRole);
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Header */}
@@ -302,10 +393,27 @@ toast.success("¡Excelente! Tus resultados finales se guardaron.");
             Día 21 – Cierre y Resultados
           </h1>
           <p className="text-emerald-100">
-            Registra tus resultados finales y mira tu progreso
+            Registra tus resultados finales y conoce tu progreso
           </p>
         </div>
       </Card>
+
+      {/* Access Control Warning */}
+      {isReadOnlyMode && (
+        <Card className="p-4 bg-yellow-50 border-yellow-200 border">
+          <div className="flex items-center space-x-3">
+            <ApperIcon name="Clock" className="h-6 w-6 text-yellow-600" />
+            <div>
+              <p className="text-yellow-800 font-medium">
+                ⏳ Esta sección estará disponible el Día 21 de tu reto. Vuelve el {accessControl.availableDate}.
+              </p>
+              <p className="text-yellow-700 text-sm mt-1">
+                Día actual: {accessControl.daysElapsed}/21
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Final Metrics Form */}
       <Card className="p-6">
@@ -321,6 +429,7 @@ toast.success("¡Excelente! Tus resultados finales se guardaron.");
             value={formData.peso_kg}
             onChange={(e) => handleInputChange("peso_kg", e.target.value)}
             placeholder="70.5"
+            readOnly={isReadOnlyMode}
           />
 
           <Input
@@ -330,6 +439,7 @@ toast.success("¡Excelente! Tus resultados finales se guardaron.");
             value={formData.cintura_cm}
             onChange={(e) => handleInputChange("cintura_cm", e.target.value)}
             placeholder="85.5"
+            readOnly={isReadOnlyMode}
           />
 
           <Input
@@ -339,6 +449,7 @@ toast.success("¡Excelente! Tus resultados finales se guardaron.");
             value={formData.cadera_cm}
             onChange={(e) => handleInputChange("cadera_cm", e.target.value)}
             placeholder="95.0"
+            readOnly={isReadOnlyMode}
           />
 
           <Input
@@ -348,6 +459,7 @@ toast.success("¡Excelente! Tus resultados finales se guardaron.");
             value={formData.body_fat_pct}
             onChange={(e) => handleInputChange("body_fat_pct", e.target.value)}
             placeholder="25.3"
+            readOnly={isReadOnlyMode}
           />
 
           <Input
@@ -357,6 +469,7 @@ toast.success("¡Excelente! Tus resultados finales se guardaron.");
             value={formData.muscle_pct}
             onChange={(e) => handleInputChange("muscle_pct", e.target.value)}
             placeholder="35.2"
+            readOnly={isReadOnlyMode}
           />
 
           <Input
@@ -365,6 +478,7 @@ toast.success("¡Excelente! Tus resultados finales se guardaron.");
             value={formData.grasa_visceral}
             onChange={(e) => handleInputChange("grasa_visceral", e.target.value)}
             placeholder="8"
+            readOnly={isReadOnlyMode}
           />
 
           <Input
@@ -373,6 +487,7 @@ toast.success("¡Excelente! Tus resultados finales se guardaron.");
             value={formData.edad_metabolica}
             onChange={(e) => handleInputChange("edad_metabolica", e.target.value)}
             placeholder="28"
+            readOnly={isReadOnlyMode}
           />
 
           <Input
@@ -381,6 +496,7 @@ toast.success("¡Excelente! Tus resultados finales se guardaron.");
             value={formData.agua_vasos_promedio}
             onChange={(e) => handleInputChange("agua_vasos_promedio", e.target.value)}
             placeholder="8"
+            readOnly={isReadOnlyMode}
           />
 
           <Input
@@ -389,6 +505,7 @@ toast.success("¡Excelente! Tus resultados finales se guardaron.");
             value={formData.pasos_promedio}
             onChange={(e) => handleInputChange("pasos_promedio", e.target.value)}
             placeholder="10000"
+            readOnly={isReadOnlyMode}
           />
 
           <Input
@@ -398,7 +515,22 @@ toast.success("¡Excelente! Tus resultados finales se guardaron.");
             value={formData.horas_sueno}
             onChange={(e) => handleInputChange("horas_sueno", e.target.value)}
             placeholder="7.5"
+            readOnly={isReadOnlyMode}
           />
+
+          {/* BMI Display */}
+          {formData.peso_kg && initialMetrics?.estatura_cm && (
+            <div className="lg:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                IMC final (calculado)
+              </label>
+              <div className="p-3 bg-blue-50 rounded-lg border">
+                <span className="text-blue-800 font-semibold">
+                  {((parseFloat(formData.peso_kg) || 0) / Math.pow((initialMetrics.estatura_cm || 170) / 100, 2)).toFixed(1)}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       </Card>
 
@@ -422,36 +554,42 @@ toast.success("¡Excelente! Tus resultados finales se guardaron.");
                     alt={`Foto final de ${photoType}`}
                     className="w-full h-48 object-cover rounded-lg border-2 border-gray-200"
                   />
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setPhotos(prev => ({ ...prev, [photoType]: null }))}
-                  >
-                    <ApperIcon name="X" className="h-4 w-4 mr-2" />
-                    Eliminar
-                  </Button>
+                  {!isReadOnlyMode && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setPhotos(prev => ({ ...prev, [photoType]: null }))}
+                    >
+                      <ApperIcon name="X" className="h-4 w-4 mr-2" />
+                      Eliminar
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-4">
                   <div className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
                     <div className="text-center">
                       <ApperIcon name="Camera" className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600">Subir foto final</p>
+                      <p className="text-sm text-gray-600">
+                        {isReadOnlyMode ? "Sin foto disponible" : "Subir foto final"}
+                      </p>
                     </div>
                   </div>
                   
-                  <label className="block">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handlePhotoUpload(photoType, e.target.files[0])}
-                      className="hidden"
-                    />
-                    <Button variant="secondary" size="sm" className="w-full">
-                      <ApperIcon name="Upload" className="h-4 w-4 mr-2" />
-                      Seleccionar foto
-                    </Button>
-                  </label>
+                  {!isReadOnlyMode && (
+                    <label className="block">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handlePhotoUpload(photoType, e.target.files[0])}
+                        className="hidden"
+                      />
+                      <Button variant="secondary" size="sm" className="w-full">
+                        <ApperIcon name="Upload" className="h-4 w-4 mr-2" />
+                        Seleccionar foto
+                      </Button>
+                    </label>
+                  )}
                 </div>
               )}
             </div>
@@ -475,11 +613,14 @@ toast.success("¡Excelente! Tus resultados finales se guardaron.");
               {[1, 2, 3, 4, 5].map((level) => (
                 <button
                   key={level}
-                  onClick={() => handleInputChange("energia_percibida", level)}
+                  onClick={() => !isReadOnlyMode && handleInputChange("energia_percibida", level)}
+                  disabled={isReadOnlyMode}
                   className={`w-12 h-12 rounded-full font-semibold transition-all duration-200 ${
                     formData.energia_percibida === level
                       ? "bg-gradient-to-r from-primary to-secondary text-white scale-110"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      : isReadOnlyMode 
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                   }`}
                 >
                   {level}
@@ -497,15 +638,16 @@ toast.success("¡Excelente! Tus resultados finales se guardaron.");
               {habitOptions.map((habit) => (
                 <label
                   key={habit}
-                  className="flex items-center space-x-3 cursor-pointer"
+                  className={`flex items-center space-x-3 ${isReadOnlyMode ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                 >
                   <input
                     type="checkbox"
                     checked={formData.habitos_mantener.includes(habit)}
-                    onChange={() => handleHabitToggle(habit)}
-                    className="w-5 h-5 text-primary border-gray-300 rounded focus:ring-purple-200"
+                    onChange={() => !isReadOnlyMode && handleHabitToggle(habit)}
+                    disabled={isReadOnlyMode}
+                    className="w-5 h-5 text-primary border-gray-300 rounded focus:ring-purple-200 disabled:opacity-50"
                   />
-                  <span className="text-gray-700">{habit}</span>
+                  <span className={isReadOnlyMode ? "text-gray-400" : "text-gray-700"}>{habit}</span>
                 </label>
               ))}
             </div>
@@ -520,11 +662,14 @@ toast.success("¡Excelente! Tus resultados finales se guardaron.");
               {[1, 2, 3, 4, 5].map((level) => (
                 <button
                   key={level}
-                  onClick={() => handleInputChange("satisfaccion_general", level)}
+                  onClick={() => !isReadOnlyMode && handleInputChange("satisfaccion_general", level)}
+                  disabled={isReadOnlyMode}
                   className={`w-12 h-12 rounded-full font-semibold transition-all duration-200 ${
                     formData.satisfaccion_general === level
                       ? "bg-gradient-to-r from-primary to-secondary text-white scale-110"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      : isReadOnlyMode 
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                   }`}
                 >
                   {level}
@@ -542,20 +687,24 @@ toast.success("¡Excelente! Tus resultados finales se guardaron.");
               value={formData.testimonio}
               onChange={(e) => handleInputChange("testimonio", e.target.value)}
               rows={6}
-              className="w-full px-4 py-3 text-gray-900 bg-white border border-gray-200 rounded-xl transition-all duration-200 placeholder:text-gray-400 focus:outline-none focus:ring-4 focus:ring-purple-200 focus:border-primary"
-              placeholder="Cuéntanos sobre tu experiencia: ¿qué lograste? ¿cómo te sientes? ¿qué fue lo más desafiante? ¿qué aprendiste?"
+              readOnly={isReadOnlyMode}
+              className={`w-full px-4 py-3 text-gray-900 bg-white border border-gray-200 rounded-xl transition-all duration-200 placeholder:text-gray-400 focus:outline-none focus:ring-4 focus:ring-purple-200 focus:border-primary ${
+                isReadOnlyMode ? 'bg-gray-50 cursor-not-allowed' : ''
+              }`}
+              placeholder={isReadOnlyMode ? "El testimonio aparecerá aquí cuando esté disponible" : "Cuéntanos sobre tu experiencia: ¿qué lograste? ¿cómo te sientes? ¿qué fue lo más desafiante? ¿qué aprendiste?"}
               required
             />
             
             <div className="mt-4">
-              <label className="flex items-center space-x-3 cursor-pointer">
+              <label className={`flex items-center space-x-3 ${isReadOnlyMode ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
                 <input
                   type="checkbox"
                   checked={formData.permiso_uso_testimonio}
-                  onChange={(e) => handleInputChange("permiso_uso_testimonio", e.target.checked)}
-                  className="w-5 h-5 text-primary border-gray-300 rounded focus:ring-purple-200"
+                  onChange={(e) => !isReadOnlyMode && handleInputChange("permiso_uso_testimonio", e.target.checked)}
+                  disabled={isReadOnlyMode}
+                  className="w-5 h-5 text-primary border-gray-300 rounded focus:ring-purple-200 disabled:opacity-50"
                 />
-                <span className="text-sm text-gray-700">
+                <span className={`text-sm ${isReadOnlyMode ? 'text-gray-400' : 'text-gray-700'}`}>
                   Permiso de uso: Autorizo compartir este testimonio de forma anónima
                 </span>
               </label>
@@ -565,7 +714,7 @@ toast.success("¡Excelente! Tus resultados finales se guardaron.");
       </Card>
 
       {/* Save Button */}
-      {!showComparison && (
+      {!showComparison && !isReadOnlyMode && (
         <Card className="p-6">
           <div className="text-center">
             <Button 
@@ -580,23 +729,25 @@ toast.success("¡Excelente! Tus resultados finales se guardaron.");
         </Card>
       )}
 
-      {/* Comparison Section */}
+      {/* Comparison Results */}
       {showComparison && renderComparison()}
 
-      {/* Navigation Button */}
+      {/* Navigation Actions */}
       {showComparison && (
         <Card className="p-6">
           <div className="text-center">
-<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Button onClick={() => navigate("/progreso")} size="lg">
                 <ApperIcon name="BarChart" className="h-5 w-5 mr-2" />
                 Ver Mi Progreso Completo
               </Button>
               
-              <Button onClick={() => navigate("/progreso?showRanking=true")} size="lg" variant="secondary">
-                <ApperIcon name="Trophy" className="h-5 w-5 mr-2" />
-                Ver Ranking de Finalistas
-              </Button>
+              {canViewRanking && (
+                <Button onClick={() => navigate("/progreso?showRanking=true")} size="lg" variant="secondary">
+                  <ApperIcon name="Trophy" className="h-5 w-5 mr-2" />
+                  Ver Ranking de Finalistas
+                </Button>
+              )}
             </div>
           </div>
         </Card>

@@ -32,6 +32,12 @@ const tabs = [
       path: "/habitos" 
     },
     { 
+      id: "dia-21", 
+      label: "Día 21", 
+      icon: "Award",
+      path: "/dia-21" 
+    },
+    { 
       id: "progreso", 
       label: "Progreso", 
       icon: "TrendingUp",
@@ -48,7 +54,8 @@ const tabs = [
 const isActive = (path) => {
     return location.pathname === path || 
            (path === "/calendario" && location.pathname.startsWith("/dia/")) ||
-           (path === "/dia-0" && location.pathname === "/dia-0");
+           (path === "/dia-0" && location.pathname === "/dia-0") ||
+           (path === "/dia-21" && (location.pathname === "/dia-21" || location.pathname === "/metricas-finales"));
   };
 
   return (

@@ -4,7 +4,7 @@ let healthMetrics = [...healthMetricsData];
 
 export const healthMetricsService = {
   async getHealthMetrics() {
-    await new Promise(resolve => setTimeout(resolve, 300));
+await new Promise(resolve => setTimeout(resolve, 300));
     
     const userMetrics = healthMetrics.filter(hm => hm.user_id === 1);
     
@@ -28,7 +28,7 @@ export const healthMetricsService = {
 async createHealthMetrics(metricsData) {
     await new Promise(resolve => setTimeout(resolve, 400));
     
-    const maxId = healthMetrics.length > 0 ? Math.max(...healthMetrics.map(hm => hm.Id)) : 0;
+const maxId = healthMetrics.length > 0 ? Math.max(...healthMetrics.map(hm => hm.Id)) : 0;
     
     // Calculate BMI if weight and height provided
     let imc = null;
@@ -84,13 +84,20 @@ async createHealthMetrics(metricsData) {
     if (metricIndex === -1) {
       // Create new metrics if not found
       return await this.createHealthMetrics({ phase, ...metricsData });
-    }
+}
     
     // Calculate BMI if weight and height provided
     let imc = healthMetrics[metricIndex].imc;
     if (metricsData.peso_kg && metricsData.estatura_cm) {
       const heightInMeters = metricsData.estatura_cm / 100;
       imc = Number((metricsData.peso_kg / (heightInMeters * heightInMeters)).toFixed(1));
+    } else if (metricsData.peso_kg && metricsData.phase === "fin") {
+      // For final metrics, try to get height from initial metrics
+      const initialMetrics = healthMetrics.find(hm => hm.user_id === 1 && hm.phase === "inicio");
+      if (initialMetrics && initialMetrics.estatura_cm) {
+        const heightInMeters = initialMetrics.estatura_cm / 100;
+        imc = Number((metricsData.peso_kg / (heightInMeters * heightInMeters)).toFixed(1));
+      }
     }
     
     healthMetrics[metricIndex] = {
@@ -126,7 +133,7 @@ async createHealthMetrics(metricsData) {
       changes: {}
     };
     
-    if (inicio && fin) {
+if (inicio && fin) {
       const metrics = ["peso_kg", "cintura_cm", "cadera_cm", "body_fat_pct", "muscle_pct", "grasa_visceral", "edad_metabolica", "imc"];
       
       metrics.forEach(metric => {

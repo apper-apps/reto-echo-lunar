@@ -119,7 +119,7 @@ habitCompletion: true
     };
 },
 
-  async getRoleType() {
+async getRoleType() {
     await new Promise(resolve => setTimeout(resolve, 200));
     
     const user = users.find(u => u.Id === 1);

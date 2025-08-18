@@ -2,7 +2,7 @@
 let photos = [];
 
 export const photosService = {
-  async getPhotosByPhase(phase) {
+async getPhotosByPhase(phase) {
     await new Promise(resolve => setTimeout(resolve, 200));
     
     const userPhotos = photos.find(p => p.user_id === 1 && p.phase === phase);
