@@ -65,9 +65,9 @@ const Layout = () => {
           </div>
           
           <NavigationTabs />
-        </aside>
+</aside>
         
-{/* Desktop main content */}
+        {/* Desktop main content */}
         <div className="flex-1 flex flex-col">
           {/* Unified responsive banner header */}
           <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-emerald-600 text-white px-4 md:px-6 py-4 sticky top-0 z-50 shadow-lg">
@@ -119,9 +119,9 @@ const Layout = () => {
                 </button>
               </div>
             </div>
-          </div>
+</div>
 
-{/* Desktop main content */}
+          {/* Desktop main content */}
           <main className="flex-1 p-6">
             <Outlet />
           </main>
@@ -191,9 +191,9 @@ const Layout = () => {
           </main>
           
           {/* Mobile bottom navigation */}
-          <NavigationTabs />
+<NavigationTabs />
         </>
-)}
+      )}
     </div>
   );
 };
