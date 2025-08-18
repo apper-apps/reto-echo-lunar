@@ -2,11 +2,11 @@ import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import ApperIcon from "@/components/ApperIcon";
 
-const NavigationTabs = () => {
+const NavigationTabs = ({ userRole = 'Participante' }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-const tabs = [
+const baseTabs = [
     { 
       id: "dashboard", 
       label: "Inicio", 
@@ -57,11 +57,22 @@ path: "/dia-0"
     }
   ];
 
+  // Add coach tab if user is a coach
+  const coachTab = {
+    id: "coach",
+    label: "Coach",
+    icon: "Users",
+    path: "/coach"
+  };
+
+  const tabs = userRole === 'Coach' ? [...baseTabs, coachTab] : baseTabs;
+
 const isActive = (path) => {
     return location.pathname === path || 
            (path === "/calendario" && location.pathname.startsWith("/dia/")) ||
            (path === "/dia-0" && location.pathname === "/dia-0") ||
-           (path === "/dia-21" && (location.pathname === "/dia-21" || location.pathname === "/metricas-finales"));
+           (path === "/dia-21" && (location.pathname === "/dia-21" || location.pathname === "/metricas-finales")) ||
+           (path === "/coach" && location.pathname === "/coach");
   };
 
   return (

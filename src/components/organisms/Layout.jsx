@@ -3,15 +3,16 @@ import { Outlet } from "react-router-dom";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { progressService } from "@/services/api/progressService";
+import { userService } from "@/services/api/userService";
 import { toast } from "react-toastify";
 import ApperIcon from "@/components/ApperIcon";
 import NavigationTabs from "@/components/molecules/NavigationTabs";
-
 const Layout = () => {
-  const [userProgress, setUserProgress] = useState(null);
+const [userProgress, setUserProgress] = useState(null);
   const [notifications, setNotifications] = useState(3); // Mock notification count
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [userRole, setUserRole] = useState('Participante');
 
   useEffect(() => {
     const handleResize = () => {
@@ -22,19 +23,23 @@ const Layout = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    const loadUserProgress = async () => {
+useEffect(() => {
+    const loadUserData = async () => {
       try {
-        const progress = await progressService.getUserProgress();
+        const [progress, role] = await Promise.all([
+          progressService.getUserProgress(),
+          userService.getRoleType()
+        ]);
         setUserProgress(progress);
+        setUserRole(role);
       } catch (error) {
-        console.error("Error loading user progress:", error);
+        console.error("Error loading user data:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadUserProgress();
+    loadUserData();
   }, []);
 
   const handleNotificationClick = () => {
@@ -64,7 +69,7 @@ return (
               <p className="text-sm text-gray-600 mt-1">Transformación 80/20</p>
             </div>
             
-            <NavigationTabs />
+<NavigationTabs userRole={userRole} />
           </aside>
         
           {/* Desktop main content */}
@@ -191,8 +196,8 @@ return (
             </div>
           </main>
           
-          {/* Mobile bottom navigation */}
-<NavigationTabs />
+{/* Mobile bottom navigation */}
+<NavigationTabs userRole={userRole} />
 </>
       )}
     </div>

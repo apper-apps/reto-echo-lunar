@@ -10,6 +10,7 @@ import FinalMetrics from "@/components/pages/FinalMetrics";
 import Profile from "@/components/pages/Profile";
 import Onboarding from "@/components/pages/Onboarding";
 import Calendar from "@/components/pages/Calendar";
+import CoachDashboard from "@/components/pages/CoachDashboard";
 import Layout from "@/components/organisms/Layout";
 
 // Layout
@@ -34,6 +35,7 @@ function App() {
             <Route path="onboarding" element={<Onboarding />} />
             <Route path="metricas-finales" element={<FinalMetrics />} />
             <Route path="dia-21" element={<FinalMetrics />} />
+            <Route path="coach" element={<CoachDashboard />} />
           </Route>
         </Routes>
 

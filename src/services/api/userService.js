@@ -127,8 +127,21 @@ async getRoleType() {
       throw new Error("Usuario no encontrado");
     }
 
-    // Return role type from user data, default to 'Participante'
-    return user.role || user.profile?.role || 'Participante';
+    // For demo: user ID 1 is coach, others are participants
+    // In production, this would check actual role from user data
+    return user.Id === 1 && user.role === 'Coach' ? 'Coach' : user.role || 'Participante';
+  },
+
+  async setUserRole(userId, role) {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    const userIndex = users.findIndex(u => u.Id === userId);
+    if (userIndex === -1) {
+      throw new Error("Usuario no encontrado");
+    }
+
+    users[userIndex].role = role;
+    return JSON.parse(JSON.stringify(users[userIndex]));
   },
 
   async getDayZeroStatus() {

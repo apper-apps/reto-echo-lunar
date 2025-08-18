@@ -3,7 +3,7 @@
     "Id": 1,
     "email": "usuario@ejemplo.com",
     "phone": "+52-555-123-4567",
-    "role": "Participante",
+"role": "Coach",
     "createdAt": "2024-01-15T10:00:00Z",
     "profile": {
       "fullName": "María Elena González",
