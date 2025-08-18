@@ -85,14 +85,20 @@ useEffect(() => {
 
 const handleToggleHabit = async (habitId) => {
     try {
-      await habitService.toggleHabitStatus(habitId);
+      // Validate habitId
+      if (!habitId) {
+        throw new Error("ID de hábito inválido");
+      }
+
+      const updatedHabit = await habitService.toggleHabitStatus(habitId);
       await loadHabits(); // Reload to get updated status
       
       // Show notification if habit completion alerts are enabled
       if (notificationPreferences?.enabled && notificationPreferences?.habitCompletion) {
-        const habit = habits.find(h => h.Id === habitId);
-        if (habit) {
-          toast.success(`¡Hábito "${habit.name}" completado! 🎉`);
+        const habit = habits.find(h => h.Id === habitId) || updatedHabit;
+        if (habit?.name) {
+          const statusMessage = updatedHabit.status === 'completed' ? 'completado' : 'actualizado';
+          toast.success(`¡Hábito "${habit.name}" ${statusMessage}! 🎉`);
         } else {
           toast.success("¡Hábito actualizado!");
         }
@@ -100,7 +106,8 @@ const handleToggleHabit = async (habitId) => {
         toast.success("¡Hábito actualizado!");
       }
     } catch (err) {
-      toast.error("Error al actualizar el hábito");
+      console.error("Error updating habit:", err);
+      toast.error(`Error al actualizar el hábito: ${err.message || 'Inténtalo de nuevo'}`);
     }
   };
 

@@ -67,7 +67,7 @@ export const habitService = {
     return true;
   },
 
-  async toggleHabitStatus(habitId) {
+async toggleHabitStatus(habitId) {
     await new Promise(resolve => setTimeout(resolve, 200));
     
     const habitIndex = habits.findIndex(h => h.Id === habitId);
@@ -77,15 +77,26 @@ export const habitService = {
     
     const habit = habits[habitIndex];
     
+    // Ensure habit has required properties with safe defaults
+    if (typeof habit.target === 'undefined' || habit.target === null) {
+      habit.target = 1;
+    }
+    if (typeof habit.currentValue === 'undefined' || habit.currentValue === null) {
+      habit.currentValue = 0;
+    }
+    if (!habit.status) {
+      habit.status = "incomplete";
+    }
+    
     // Cycle through statuses: incomplete -> partial -> completed -> incomplete
     switch (habit.status) {
       case "incomplete":
         habit.status = "partial";
-        habit.currentValue = Math.floor((habit.target || 1) / 2);
+        habit.currentValue = Math.max(1, Math.floor(habit.target / 2));
         break;
       case "partial":
         habit.status = "completed";
-        habit.currentValue = habit.target || 1;
+        habit.currentValue = habit.target;
         break;
       case "completed":
         habit.status = "incomplete";
