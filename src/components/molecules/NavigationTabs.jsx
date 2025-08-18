@@ -17,9 +17,9 @@ const tabs = [
       id: "dia-0", 
       label: "Día 0", 
       icon: "Target",
-      path: "/dia-0" 
+path: "/dia-0" 
     },
-{ 
+    { 
       id: "calendario", 
       label: "Calendario", 
       icon: "Calendar",
