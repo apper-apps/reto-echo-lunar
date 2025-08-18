@@ -406,9 +406,9 @@ const renderSectionCard = (sectionKey, sectionData) => {
             Hábitos de Hoy
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {dayHabits.map((habit) => (
+{dayHabits.map((habit) => (
               <div
-                key={habit.id}
+                key={habit?.id || `habit-${habit?.name}-${Math.random()}`}
                 className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-200 cursor-pointer hover:shadow-md ${
                   habit.status === "completed"
                     ? "bg-emerald-50 border-emerald-200"
