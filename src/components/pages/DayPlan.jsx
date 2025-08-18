@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import ApperIcon from "@/components/ApperIcon";
-import Card from "@/components/atoms/Card";
-import Button from "@/components/atoms/Button";
-import Badge from "@/components/atoms/Badge";
-import Input from "@/components/atoms/Input";
-import Loading from "@/components/ui/Loading";
-import Error from "@/components/ui/Error";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { dayPlanService } from "@/services/api/dayPlanService";
 import { habitService } from "@/services/api/habitService";
 import { toast } from "react-toastify";
+import ApperIcon from "@/components/ApperIcon";
+import Error from "@/components/ui/Error";
+import Loading from "@/components/ui/Loading";
+import Input from "@/components/atoms/Input";
+import Button from "@/components/atoms/Button";
+import Badge from "@/components/atoms/Badge";
+import Card from "@/components/atoms/Card";
 
 const DayPlan = () => {
   const { dayNumber } = useParams();
@@ -389,24 +389,23 @@ const renderSectionCard = (sectionKey, sectionData) => {
           <div className="text-sm text-gray-600">Puntos</div>
         </Card>
       </div>
-
-      {/* Day Plan Sections */}
+{/* Sections */}
       <div className="space-y-6">
-<h2 className="font-display font-semibold text-xl">Plan del Día</h2>
-        
-<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {dayData?.morning && <div key="morning">{renderSectionCard("morning", dayData.morning)}</div>}
-          {dayData?.midday && <div key="midday">{renderSectionCard("midday", dayData.midday)}</div>}
-          {dayData?.afternoon && <div key="afternoon">{renderSectionCard("afternoon", dayData.afternoon)}</div>}
-          {dayData?.night && <div key="night">{renderSectionCard("night", dayData.night)}</div>}
-        </div>
+        {dayData?.sections && Object.entries(dayData.sections).map(([sectionKey, sectionData]) => (
+          <div key={`section-${sectionKey}`}>
+            {renderSectionCard(sectionKey, sectionData)}
+          </div>
+        ))}
       </div>
 
-      {/* Today's Habits */}
-      {dayHabits.length > 0 && (
+{/* Today's Habits */}
+      {dayHabits && dayHabits.length > 0 && (
         <Card className="p-6">
-          <h3 className="font-display font-semibold text-lg mb-4">Hábitos de Hoy</h3>
-          <div className="space-y-3">
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <span className="text-2xl mr-2">🎯</span>
+            Hábitos de Hoy
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {dayHabits.map((habit) => (
               <div
                 key={habit.id}
