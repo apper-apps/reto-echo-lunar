@@ -6,7 +6,7 @@ import Badge from "@/components/atoms/Badge";
 import Input from "@/components/atoms/Input";
 import HabitToggle from "@/components/molecules/HabitToggle";
 import Loading from "@/components/ui/Loading";
-import Error from "@/components/ui/Error";
+import ErrorComponent from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
 import { habitService } from "@/services/api/habitService";
 import { userService } from "@/services/api/userService";
@@ -146,9 +146,8 @@ const handleToggleHabit = async (habitId) => {
     }
   };
 
-  if (loading) return <Loading />;
-  if (error) return <Error message={error} onRetry={loadHabits} />;
-
+if (loading) return <Loading />;
+if (error) return <ErrorComponent message={error} onRetry={loadHabits} />;
   const todayStats = {
     completed: habits.filter(h => h.status === "completed").length,
     partial: habits.filter(h => h.status === "partial").length,
