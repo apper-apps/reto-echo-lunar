@@ -51,11 +51,12 @@ const Layout = () => {
   const monthYear = format(currentDate, "MMM yyyy", { locale: es });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-emerald-50">
+<div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-emerald-50">
       {/* Desktop layout */}
-      <div className="hidden lg:flex">
-        {/* Desktop sidebar */}
-        <aside className="w-64 h-screen bg-white shadow-xl border-r border-purple-100 p-6">
+      {!isMobile && (
+        <div className="hidden lg:flex">
+          {/* Desktop sidebar */}
+          <aside className="w-64 h-screen bg-white shadow-xl border-r border-purple-100 p-6">
           <div className="mb-8">
             <h1 className="font-display font-bold text-2xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               Reto 21D
@@ -192,7 +193,7 @@ const Layout = () => {
           {/* Mobile bottom navigation */}
           <NavigationTabs />
         </>
-      )}
+)}
     </div>
   );
 };
