@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import ReactApexChart from "react-apexcharts";
 import { progressService } from "@/services/api/progressService";
 import { healthMetricsService } from "@/services/api/healthMetricsService";
+import { userService } from "@/services/api/userService";
 import ApperIcon from "@/components/ApperIcon";
 import Error from "@/components/ui/Error";
 import Loading from "@/components/ui/Loading";
@@ -11,7 +12,6 @@ import ProgressRing from "@/components/molecules/ProgressRing";
 import Button from "@/components/atoms/Button";
 import Badge from "@/components/atoms/Badge";
 import Card from "@/components/atoms/Card";
-
 const Progress = () => {
   const navigate = useNavigate();
   const [progressData, setProgressData] = useState(null);
@@ -20,8 +20,10 @@ const Progress = () => {
   const [selectedMetric, setSelectedMetric] = useState("weight");
   const [userRanking, setUserRanking] = useState(null);
   const [showRanking, setShowRanking] = useState(false);
+  const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
 const loadProgressData = async () => {
     try {
       setLoading(true);
@@ -396,8 +398,8 @@ const loadProgressData = async () => {
         />
       </div>
 
-      {/* Action Buttons */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+{/* Action Buttons */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate("/calendario")}>
           <div className="flex items-center space-x-4">
             <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-3 rounded-lg">
@@ -421,6 +423,21 @@ const loadProgressData = async () => {
             </div>
           </div>
         </Card>
+
+        {/* Finalists Ranking Button - Only visible for Coach/Admin */}
+        {userRole && (userRole === 'Coach' || userRole === 'Admin') && (
+          <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate("/ranking-finalistas")}>
+            <div className="flex items-center space-x-4">
+              <div className="bg-gradient-to-r from-yellow-100 to-orange-100 p-3 rounded-lg">
+                <ApperIcon name="Trophy" className="h-6 w-6 text-yellow-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900">Ver Ranking de Finalistas</h3>
+                <p className="text-sm text-gray-600">Consulta el ranking final del reto</p>
+              </div>
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   );

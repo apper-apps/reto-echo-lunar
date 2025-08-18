@@ -1,4 +1,6 @@
 import progressData from "@/services/mockData/progress.json";
+import React from "react";
+import Error from "@/components/ui/Error";
 
 let progress = [...progressData];
 
@@ -187,11 +189,24 @@ return null;
   async getTopRankings(limit = 10) {
     await new Promise(resolve => setTimeout(resolve, 300));
     
-    const rankings = await this.calculateRankingWithBonusPoints();
+const rankings = await this.calculateRankingWithBonusPoints();
     return {
       rankings: rankings.slice(0, limit),
       totalParticipants: rankings.length,
       lastUpdated: new Date().toISOString()
     };
+  },
+
+  async recalculateRanking() {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // This method triggers a fresh calculation of the ranking
+    // In a real implementation, this might clear caches, update database indexes, etc.
+    console.log('Ranking recalculated at:', new Date().toISOString());
+    
+    return {
+      success: true,
+      message: 'Ranking recalculado exitosamente',
+      timestamp: new Date().toISOString()
+    };
   }
-};
