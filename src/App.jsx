@@ -26,10 +26,11 @@ function App() {
 <Route path="dashboard" element={<Dashboard />} />
 <Route path="calendario" element={<Calendar />} />
 <Route path="dia-0" element={<DayZero />} />
-<Route path="dia/:dayNumber" element={<DayPlan />} />
-<Route path="habitos" element={<Habits />} />
-<Route path="progreso" element={<Progress />} />
-<Route path="progreso" element={<Progress />} />
+<Route path="calendario" element={<Calendar />} />
+        <Route path="desafios-semanales" element={<Dashboard />} />
+        <Route path="dia-0" element={<DayZero />} />
+        <Route path="dia/:dayNumber" element={<DayPlan />} />
+        <Route path="habitos" element={<Habits />} />
 <Route path="ranking" element={<Progress />} />
 <Route path="perfil" element={<Profile />} />
 <Route path="onboarding" element={<Onboarding />} />

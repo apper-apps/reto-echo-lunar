@@ -19,11 +19,17 @@ const tabs = [
       icon: "Target",
       path: "/dia-0" 
     },
-    { 
+{ 
       id: "calendario", 
       label: "Calendario", 
       icon: "Calendar",
       path: "/calendario" 
+    },
+    { 
+      id: "desafios", 
+      label: "Desafíos", 
+      icon: "Trophy",
+      path: "/desafios-semanales" 
     },
     { 
       id: "habitos", 

@@ -247,12 +247,11 @@ const loadDashboardData = async () => {
         )}
       </Card>
 
-      {/* Mini-Challenges Section */}
-      {(activeMiniChallenges.length > 0 || userMiniChallenges.length > 0) && (
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-display font-bold text-xl text-gray-900">
-              🏆 Mini-Retos Semanales
+{/* Mini-Challenges Section */}
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-display font-bold text-xl text-gray-900">
+            🏆 Mini-Retos Semanales
             </h2>
             <Badge variant="secondary" className="bg-gradient-to-r from-amber-100 to-orange-100 text-amber-800">
               ¡Puntos Extra!
@@ -389,10 +388,26 @@ const loadDashboardData = async () => {
                   </Button>
                 </div>
               )}
+</div>
+          )}
+          
+          {/* Empty State */}
+          {activeMiniChallenges.length === 0 && userMiniChallenges.length === 0 && (
+            <div className="text-center py-8">
+              <ApperIcon name="Trophy" className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-600 mb-2">
+                No hay mini-retos disponibles
+              </h3>
+              <p className="text-gray-500 mb-4">
+                Los mini-retos semanales aparecerán aquí cuando estén activos
+              </p>
+              <Button variant="secondary" size="sm">
+                <ApperIcon name="RefreshCw" className="h-4 w-4 mr-2" />
+                Actualizar
+              </Button>
             </div>
           )}
         </Card>
-      )}
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
