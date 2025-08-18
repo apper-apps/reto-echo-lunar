@@ -129,16 +129,17 @@ const Layout = () => {
                 <div className="text-2xl font-bold">{dayNumber}</div>
                 <div className="text-xs opacity-90 uppercase">{monthYear}</div>
               </div>
-              <div className="hidden sm:block">
-                <div className="text-sm font-medium capitalize">{formattedDate}</div>
+<div className="hidden sm:block">
+                <div className="text-sm font-medium">¡Hola María!</div>
+                <div className="text-xs opacity-90 capitalize">{formattedDate}</div>
                 <div className="text-xs opacity-90">Día {userProgress?.currentDay || 1} de 21</div>
               </div>
             </div>
 
             {/* Título central */}
-            <div className="text-center">
-              <h1 className="font-display font-bold text-xl">Reto 21D</h1>
-              <p className="text-xs opacity-90">Transformación 80/20</p>
+<div className="text-center">
+              <h1 className="font-display font-bold text-xl">¡Hola María!</h1>
+              <p className="text-xs opacity-90">Reto 21D - Transformación 80/20</p>
             </div>
 
             {/* Puntos y notificaciones */}
@@ -169,16 +170,8 @@ const Layout = () => {
             </div>
           </div>
         </div>
-
-        <header className="bg-white shadow-sm border-b border-purple-100 px-4 py-4 sticky top-[80px] z-40">
-          <h1 className="font-display font-bold text-xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Panel Principal
-          </h1>
-          <p className="text-xs text-gray-600">Gestiona tu progreso diario</p>
-        </header>
-        
-        {/* Mobile main content */}
-        <main className="pb-20">
+{/* Mobile main content */}
+<main className="pb-20">
           <div className="p-4">
             <Outlet />
           </div>
