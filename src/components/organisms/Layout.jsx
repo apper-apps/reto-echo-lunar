@@ -56,12 +56,65 @@ const Layout = () => {
           <NavigationTabs />
         </aside>
         
-        {/* Desktop main content */}
-        <main className="flex-1 overflow-auto">
-          <div className="p-6">
-            <Outlet />
+{/* Desktop main content */}
+        <div className="flex-1 flex flex-col">
+          {/* Desktop banner header */}
+          <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-emerald-600 text-white px-6 py-4 shadow-lg">
+            <div className="grid grid-cols-3 gap-4 items-center max-w-6xl mx-auto">
+              {/* Calendario */}
+              <div className="flex items-center space-x-3">
+                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 flex flex-col items-center min-w-[60px]">
+                  <div className="text-2xl font-bold">{dayNumber}</div>
+                  <div className="text-xs opacity-90 uppercase">{monthYear}</div>
+                </div>
+                <div>
+                  <div className="text-sm font-medium capitalize">{formattedDate}</div>
+                  <div className="text-xs opacity-90">Día {userProgress?.currentDay || 1} de 21</div>
+                </div>
+              </div>
+
+              {/* Título central */}
+              <div className="text-center">
+                <h1 className="font-display font-bold text-xl">Reto 21D</h1>
+                <p className="text-xs opacity-90">Transformación 80/20</p>
+              </div>
+
+              {/* Puntos y notificaciones */}
+              <div className="flex items-center justify-end space-x-4">
+                {/* Puntos acumulados */}
+                <div className="flex items-center space-x-2 bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2">
+                  <ApperIcon name="Trophy" size={18} className="text-yellow-300" />
+                  <div className="text-right">
+                    <div className="text-sm font-bold">
+                      {loading ? "..." : (userProgress?.totalPoints || 0)}
+                    </div>
+                    <div className="text-xs opacity-90">puntos</div>
+                  </div>
+                </div>
+
+                {/* Campana de notificaciones */}
+                <button
+                  onClick={handleNotificationClick}
+                  className="relative p-2 bg-white/20 backdrop-blur-sm rounded-lg hover:bg-white/30 transition-colors"
+                >
+                  <ApperIcon name="Bell" size={20} />
+                  {notifications > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-medium">
+                      {notifications > 9 ? '9+' : notifications}
+                    </span>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
-        </main>
+
+          {/* Main content */}
+          <main className="flex-1 overflow-auto">
+            <div className="p-6">
+              <Outlet />
+            </div>
+          </main>
+        </div>
       </div>
       
       {/* Mobile layout */}
