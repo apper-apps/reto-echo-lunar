@@ -85,9 +85,10 @@ useEffect(() => {
 
 const handleToggleHabit = async (habitId) => {
     try {
-      // Validate habitId
-      if (!habitId) {
-        throw new Error("ID de hábito inválido");
+      // Validate habitId with more specific error information
+      if (!habitId || (typeof habitId !== 'number' && typeof habitId !== 'string')) {
+        console.error("Invalid habitId received:", habitId, "Type:", typeof habitId);
+        throw new Error("ID de hábito inválido - debe ser un número o string válido");
       }
 
       const updatedHabit = await habitService.toggleHabitStatus(habitId);

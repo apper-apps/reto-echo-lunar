@@ -41,9 +41,9 @@ const HabitToggle = ({
   };
 
   return (
-    <div 
+<div 
       className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-200 cursor-pointer hover:shadow-md ${getBackgroundColor()} ${className}`}
-      onClick={() => onToggle && onToggle(habit.id)}
+      onClick={() => onToggle && habit?.Id && onToggle(habit.Id)}
     >
       <div className="flex items-center space-x-3">
         <ApperIcon 
