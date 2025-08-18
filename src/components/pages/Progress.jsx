@@ -29,15 +29,17 @@ const loadProgressData = async () => {
       setLoading(true);
       setError("");
       
-      const [progress, metrics, chart] = await Promise.all([
+const [progress, metrics, chart, user] = await Promise.all([
         progressService.getUserProgress(),
-healthMetricsService.getHealthMetrics(),
-        progressService.getProgressChart()
+        healthMetricsService.getHealthMetrics(),
+        progressService.getProgressChart(),
+        userService.getCurrentUser()
       ]);
       
-      setProgressData(progress);
+setProgressData(progress);
       setHealthMetrics(metrics);
       setChartData(chart);
+      setUserRole(user?.role);
       
       // Check if user completed the challenge (day 21) to show ranking
       if (progress?.currentDay >= 21 || metrics?.day21) {
@@ -59,8 +61,11 @@ healthMetricsService.getHealthMetrics(),
     }
   };
 
-  useEffect(() => {
-    loadProgressData();
+useEffect(() => {
+    const initializeData = async () => {
+      await loadProgressData();
+    };
+    initializeData();
   }, []);
 
   if (loading) return <Loading />;
@@ -438,6 +443,18 @@ const suffixes = {
             </div>
           </Card>
         )}
+
+        <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate("/perfil")}>
+          <div className="flex items-center space-x-4">
+            <div className="bg-gradient-to-r from-purple-100 to-pink-100 p-3 rounded-lg">
+              <ApperIcon name="User" className="h-6 w-6 text-purple-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900">Ver Perfil</h3>
+              <p className="text-sm text-gray-600">Revisa y actualiza tu información</p>
+            </div>
+          </div>
+        </Card>
       </div>
     </div>
   );
