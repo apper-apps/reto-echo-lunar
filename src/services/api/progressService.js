@@ -1,6 +1,5 @@
 import progressData from "@/services/mockData/progress.json";
-import React from "react";
-import Error from "@/components/ui/Error";
+
 let progress = [...progressData];
 
 export const progressService = {

@@ -26,7 +26,6 @@ const [viewMode, setViewMode] = useState("daily"); // daily or weekly
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
 const loadProgressData = async () => {
     try {
       setLoading(true);
@@ -40,10 +39,22 @@ userService.getCurrentUser(),
 habitService.getTodayHabits()
 ]);
       
-setProgressData(progress);
-setHealthMetrics(metrics);
-setChartData(chart);
-setUserRole(user?.role);
+// Get additional progress data
+      const [habitChart, weeklyComparison, additionalData] = await Promise.all([
+        progressService.getHabitProgressChart(),
+        progressService.getWeeklyComparison(),
+        progressService.getAdditionalData()
+      ]);
+
+      setProgressData(progress);
+      setHealthMetrics(metrics);
+      setChartData({
+        ...chart,
+        habitChart,
+        weeklyComparison,
+        ...additionalData
+      });
+      setUserRole(user?.role);
       
       // Check if user completed the challenge (day 21) to show ranking
       if (progress?.currentDay >= 21 || metrics?.day21) {
@@ -53,7 +64,7 @@ setUserRole(user?.role);
           setShowRanking(true);
         } catch (rankingErr) {
           console.warn("Could not load ranking data:", rankingErr);
-          setShowRanking(false);
+setShowRanking(false);
         }
       }
       
@@ -180,7 +191,262 @@ const habitCompletionData = progressData?.habitCompletion || [];
     { key: "cadera_cm", label: "Cadera", unit: "cm", icon: "Move" },
     { key: "body_fat_pct", label: "% Grasa", unit: "%", icon: "Activity" }
   ];
+{/* Challenger Progress Dashboard */}
+      <div className="mb-8 p-6 bg-gradient-to-r from-purple-600 via-blue-600 to-emerald-600 text-white rounded-2xl">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold font-display">Mi Progreso</h1>
+            <p className="text-purple-100 mt-2">Desafío de 21 Días - Transformación Personal</p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="text-center">
+              <div className="text-3xl font-bold">{progressData?.currentDay || 1}</div>
+              <div className="text-sm text-purple-100">Día Actual</div>
+            </div>
+            <div className="w-px h-12 bg-purple-300"></div>
+            <div className="text-center">
+              <div className="text-3xl font-bold">{progressData?.streakDays || 0}</div>
+              <div className="text-sm text-purple-100">Días Consecutivos</div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+            <div className="text-2xl font-bold">{progressData?.totalPoints || 0}</div>
+            <div className="text-xs text-purple-100">Puntos Totales</div>
+          </div>
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+            <div className="text-2xl font-bold">{progressData?.adherencePercentage || 0}%</div>
+            <div className="text-xs text-purple-100">Adherencia</div>
+          </div>
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+            <div className="text-2xl font-bold">{progressData?.completedDays || 0}/21</div>
+            <div className="text-xs text-purple-100">Días Completados</div>
+          </div>
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+            <div className="text-2xl font-bold">{progressData?.bestStreak || 0}</div>
+            <div className="text-xs text-purple-100">Mejor Racha</div>
+          </div>
+        </div>
 
+        {/* Achievement Badges */}
+        {progressData?.achievements && progressData.achievements.length > 0 && (
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold mb-3">Logros Desbloqueados</h3>
+            <div className="flex flex-wrap gap-3">
+              {progressData.achievements.map((achievement) => (
+                <Badge 
+                  key={achievement.id}
+                  variant="secondary"
+                  className="bg-white/20 text-white border-white/30 px-3 py-2"
+                >
+                  <ApperIcon name={achievement.icon} className="w-4 h-4 mr-2" />
+                  {achievement.title}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Progress Ring */}
+      <div className="mb-8 flex justify-center">
+        <div className="bg-white rounded-2xl p-8 shadow-lg">
+          <div className="text-center mb-4">
+            <h2 className="text-xl font-semibold text-gray-800">Progreso General</h2>
+            <p className="text-gray-600">Completado del desafío</p>
+          </div>
+          <ProgressRing
+            progress={Math.round(((progressData?.currentDay || 1) / 21) * 100)}
+            size={200}
+            strokeWidth={16}
+            className="mx-auto"
+          />
+          <div className="text-center mt-4">
+            <div className="text-3xl font-bold text-purple-600">
+              {Math.round(((progressData?.currentDay || 1) / 21) * 100)}%
+            </div>
+            <div className="text-gray-600">
+              {progressData?.currentDay || 1} de 21 días
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Habit Progress Chart */}
+      {chartData?.habitChart && (
+        <Card className="mb-8 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-800">Progreso de Hábitos</h2>
+              <p className="text-gray-600">Evolución diaria de tu adherencia</p>
+            </div>
+          </div>
+          <div className="h-80">
+            <ReactApexChart
+              options={{
+                chart: {
+                  type: 'line',
+                  height: 320,
+                  toolbar: { show: false },
+                  zoom: { enabled: false }
+                },
+                colors: chartData.habitChart.series.map(s => s.color),
+                stroke: {
+                  curve: 'smooth',
+                  width: 3
+                },
+                xaxis: {
+                  categories: chartData.habitChart.categories,
+                  labels: {
+                    rotate: -45,
+                    style: { fontSize: '12px' }
+                  }
+                },
+                yaxis: [
+                  {
+                    title: { text: 'Porcentaje (%)' },
+                    min: 0,
+                    max: 100
+                  },
+                  {
+                    opposite: true,
+                    title: { text: 'Cantidad' },
+                    min: 0,
+                    max: 10
+                  }
+                ],
+                tooltip: {
+                  shared: true,
+                  intersect: false
+                },
+                legend: {
+                  position: 'top',
+                  horizontalAlign: 'center'
+                },
+                grid: {
+                  borderColor: '#f1f5f9'
+                }
+              }}
+              series={chartData.habitChart.series}
+              type="line"
+              height={320}
+            />
+          </div>
+        </Card>
+      )}
+
+      {/* Weekly Comparison */}
+      {chartData?.weeklyComparison && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Progreso Semanal</h3>
+            <div className="space-y-4">
+              {chartData.weeklyComparison.weeks.map((week) => (
+                <div key={week.week} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-semibold mr-3">
+                      {week.week}
+                    </div>
+                    <div>
+                      <div className="font-medium">Semana {week.week}</div>
+                      <div className="text-sm text-gray-600">{week.metrics.adherence}% adherencia</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold">{week.metrics.peso_kg} kg</div>
+                    <div className="text-sm text-gray-600">{week.metrics.cintura_cm} cm</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Mejoras Totales</h3>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <ApperIcon name="TrendingDown" className="w-5 h-5 text-green-500 mr-3" />
+                  <span className="font-medium">Peso</span>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-green-600">
+                    {chartData.weeklyComparison.improvements.weight > 0 ? '+' : ''}
+                    {chartData.weeklyComparison.improvements.weight} kg
+                  </div>
+                  <div className="text-sm text-gray-600">Cambio total</div>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <ApperIcon name="TrendingDown" className="w-5 h-5 text-blue-500 mr-3" />
+                  <span className="font-medium">Cintura</span>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {chartData.weeklyComparison.improvements.waist > 0 ? '+' : ''}
+                    {chartData.weeklyComparison.improvements.waist} cm
+                  </div>
+                  <div className="text-sm text-gray-600">Reducción</div>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <ApperIcon name="TrendingUp" className="w-5 h-5 text-purple-500 mr-3" />
+                  <span className="font-medium">Adherencia</span>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-purple-600">
+                    +{chartData.weeklyComparison.improvements.adherence}%
+                  </div>
+                  <div className="text-sm text-gray-600">Mejora</div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Habit Completion Detail */}
+      {chartData?.habitCompletion && (
+        <Card className="mb-8 p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-6">Detalle por Hábito</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {chartData.habitCompletion.map((habit, index) => (
+              <div key={index} className="p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium text-gray-800">{habit.name}</h4>
+                  <ApperIcon 
+                    name={habit.trend === 'up' ? 'TrendingUp' : habit.trend === 'down' ? 'TrendingDown' : 'Minus'}
+                    className={`w-4 h-4 ${
+                      habit.trend === 'up' ? 'text-green-500' : 
+                      habit.trend === 'down' ? 'text-red-500' : 'text-gray-500'
+                    }`}
+                  />
+                </div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-2xl font-bold text-purple-600">{habit.completionRate}%</span>
+                  <span className="text-sm text-gray-600">{habit.completedDays}/{habit.totalDays}</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className={`h-2 rounded-full ${
+                      habit.completionRate >= 90 ? 'bg-green-500' :
+                      habit.completionRate >= 70 ? 'bg-blue-500' :
+                      habit.completionRate >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                    }`}
+                    style={{ width: `${habit.completionRate}%` }}
+                  ></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 return (
 <div className="space-y-6">
 {/* Header */}
