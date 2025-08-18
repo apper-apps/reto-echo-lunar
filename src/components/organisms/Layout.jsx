@@ -67,9 +67,11 @@ const Layout = () => {
                   <div className="text-2xl font-bold">{dayNumber}</div>
                   <div className="text-xs opacity-90 uppercase">{monthYear}</div>
                 </div>
-                <div>
-                  <div className="text-sm font-medium capitalize">{formattedDate}</div>
+<div>
+                  <div className="text-sm font-medium">¡Hola María!</div>
+                  <div className="text-xs opacity-90 capitalize">{formattedDate}</div>
                   <div className="text-xs opacity-90">Día {userProgress?.currentDay || 1} de 21</div>
+                  <div className="text-xs opacity-90">Tu constancia es tu superpoder ⚡</div>
                 </div>
               </div>
 
@@ -133,13 +135,14 @@ const Layout = () => {
                 <div className="text-sm font-medium">¡Hola María!</div>
                 <div className="text-xs opacity-90 capitalize">{formattedDate}</div>
                 <div className="text-xs opacity-90">Día {userProgress?.currentDay || 1} de 21</div>
+                <div className="text-xs opacity-90">Tu constancia es tu superpoder ⚡</div>
               </div>
             </div>
 
             {/* Título central */}
 <div className="text-center">
-              <h1 className="font-display font-bold text-xl">¡Hola María!</h1>
-              <p className="text-xs opacity-90">Reto 21D - Transformación 80/20</p>
+              <h1 className="font-display font-bold text-xl">Reto 21D</h1>
+              <p className="text-xs opacity-90">Transformación 80/20</p>
             </div>
 
             {/* Puntos y notificaciones */}
