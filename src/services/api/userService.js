@@ -117,7 +117,7 @@ export const userService = {
       },
 habitCompletion: true
     };
-  },
+},
 
   async getRoleType() {
     await new Promise(resolve => setTimeout(resolve, 200));
@@ -159,5 +159,135 @@ habitCompletion: true
       day0_completed: completed,
       day21_completed: users[userIndex].day21_completed || false
     };
+  },
+
+  async getPrivacySettings() {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    const user = users.find(u => u.Id === 1);
+    if (!user) {
+      throw new Error("Usuario no encontrado");
+    }
+
+    return user.privacySettings || {
+      dataUsageConsent: true,
+      imageShareConsent: true,
+      analyticsConsent: true,
+      consentDate: new Date().toISOString(),
+      lastUpdated: new Date().toISOString()
+    };
+  },
+
+  async updatePrivacySetting(setting, value) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    const userIndex = users.findIndex(u => u.Id === 1);
+    if (userIndex === -1) {
+      throw new Error("Usuario no encontrado");
+    }
+
+    if (!users[userIndex].privacySettings) {
+      users[userIndex].privacySettings = {
+        dataUsageConsent: true,
+        imageShareConsent: true,
+        analyticsConsent: true,
+        consentDate: new Date().toISOString()
+      };
+    }
+
+    users[userIndex].privacySettings[setting] = value;
+    users[userIndex].privacySettings.lastUpdated = new Date().toISOString();
+
+    return users[userIndex].privacySettings;
+  },
+
+  async exportUserData(dataType) {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const user = users.find(u => u.Id === 1);
+    if (!user) {
+      throw new Error("Usuario no encontrado");
+    }
+
+    const exportData = {
+      exportDate: new Date().toISOString(),
+      userId: user.Id,
+      dataType: dataType
+    };
+
+    switch (dataType) {
+      case 'personal':
+        exportData.data = {
+          profile: user.profile || {},
+          preferences: user.preferences || {},
+          privacySettings: user.privacySettings || {},
+          notifications: user.notifications || {}
+        };
+        break;
+        
+      case 'photos':
+        exportData.data = {
+          profilePhotos: user.photos || [],
+          progressPhotos: user.progressPhotos || [],
+          uploadHistory: user.photoHistory || []
+        };
+        break;
+        
+      case 'metrics':
+        exportData.data = {
+          habits: user.habits || [],
+          healthMetrics: user.healthMetrics || [],
+          progress: user.progress || [],
+          dailyLogs: user.dailyLogs || []
+        };
+        break;
+        
+      case 'complete':
+        exportData.data = {
+          profile: user.profile || {},
+          preferences: user.preferences || {},
+          privacySettings: user.privacySettings || {},
+          notifications: user.notifications || {},
+          photos: user.photos || [],
+          progressPhotos: user.progressPhotos || [],
+          habits: user.habits || [],
+          healthMetrics: user.healthMetrics || [],
+          progress: user.progress || [],
+          dailyLogs: user.dailyLogs || [],
+          completionStats: {
+            day0_completed: user.day0_completed || false,
+            day21_completed: user.day21_completed || false
+          }
+        };
+        break;
+        
+      default:
+        throw new Error("Tipo de datos no válido");
+    }
+
+    return exportData;
+  },
+
+  async requestAccountDeletion() {
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    const user = users.find(u => u.Id === 1);
+    if (!user) {
+      throw new Error("Usuario no encontrado");
+    }
+
+    // In a real app, this would create a deletion request record
+    const deletionRequest = {
+      userId: user.Id,
+      requestDate: new Date().toISOString(),
+      status: 'pending',
+      scheduledDeletion: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+      confirmationRequired: true
+    };
+
+    // Mark user for deletion (in real app, would be in separate table)
+    user.deletionRequest = deletionRequest;
+
+    return deletionRequest;
   }
 };

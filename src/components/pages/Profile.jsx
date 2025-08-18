@@ -16,24 +16,29 @@ const [userData, setUserData] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [notificationPreferences, setNotificationPreferences] = useState(null);
+const [notificationPreferences, setNotificationPreferences] = useState(null);
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
-
+  const [privacySettings, setPrivacySettings] = useState(null);
+  const [showPrivacyCenter, setShowPrivacyCenter] = useState(false);
+  const [dataDownloadLoading, setDataDownloadLoading] = useState(false);
+  const [deletionRequestLoading, setDeletionRequestLoading] = useState(false);
 const loadUserData = async () => {
     try {
       setLoading(true);
       setError("");
       
-      const [user, profile, notifications] = await Promise.all([
+const [user, profile, notifications, privacy] = await Promise.all([
         userService.getCurrentUser(),
         userService.getUserProfile(),
-        userService.getNotificationPreferences()
+        userService.getNotificationPreferences(),
+        userService.getPrivacySettings()
       ]);
       
       setUserData(user);
       setProfileData(profile);
       setEditForm(profile || {});
       setNotificationPreferences(notifications);
+      setPrivacySettings(privacy);
     } catch (err) {
       setError("Error al cargar los datos del perfil");
       console.error("Profile load error:", err);
@@ -92,7 +97,7 @@ const handleSaveProfile = async (e) => {
     }
   };
 
-  const calculateAge = (birthDate) => {
+const calculateAge = (birthDate) => {
     if (!birthDate) return "No especificada";
     const today = new Date();
     const birth = new Date(birthDate);
@@ -106,6 +111,58 @@ const handleSaveProfile = async (e) => {
     return `${age} años`;
   };
 
+  const handlePrivacyToggle = async (setting) => {
+    try {
+      const updated = await userService.updatePrivacySetting(setting, !privacySettings[setting]);
+      setPrivacySettings(prev => ({ ...prev, [setting]: updated[setting] }));
+      toast.success('Configuración de privacidad actualizada');
+    } catch (error) {
+      console.error('Error updating privacy setting:', error);
+      toast.error('Error al actualizar la configuración de privacidad');
+    }
+  };
+
+  const handleDataDownload = async (dataType) => {
+    setDataDownloadLoading(true);
+    try {
+      const data = await userService.exportUserData(dataType);
+      
+      // Create and download file
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${dataType}-export-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.success(`Datos de ${dataType} descargados exitosamente`);
+    } catch (error) {
+      console.error('Error downloading data:', error);
+      toast.error('Error al descargar los datos');
+    } finally {
+      setDataDownloadLoading(false);
+    }
+  };
+
+  const handleDeletionRequest = async () => {
+    if (!window.confirm('¿Estás seguro de que deseas solicitar la eliminación de tu cuenta? Esta acción no se puede deshacer.')) {
+      return;
+    }
+
+    setDeletionRequestLoading(true);
+    try {
+      await userService.requestAccountDeletion();
+      toast.success('Solicitud de eliminación enviada. Recibirás un correo de confirmación.');
+    } catch (error) {
+      console.error('Error requesting account deletion:', error);
+      toast.error('Error al procesar la solicitud de eliminación');
+    } finally {
+      setDeletionRequestLoading(false);
+    }
+  };
   if (loading) return <Loading />;
   if (error) return <Error message={error} onRetry={loadUserData} />;
 
@@ -533,59 +590,286 @@ const handleSaveProfile = async (e) => {
             )}
           </div>
 
-          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-xl">
-            <div className="flex items-center space-x-4">
-              <div className="bg-green-100 p-3 rounded-lg">
-                <ApperIcon name="Shield" className="h-5 w-5 text-green-600" />
+          {/* Privacy Center */}
+          <div className="border border-gray-200 rounded-xl overflow-hidden">
+            <div 
+              className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+              onClick={() => setShowPrivacyCenter(!showPrivacyCenter)}
+            >
+              <div className="flex items-center space-x-4">
+                <div className="bg-green-100 p-3 rounded-lg">
+                  <ApperIcon name="Shield" className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-900">Centro de Privacidad</h4>
+                  <p className="text-sm text-gray-600">Gestionar consentimientos y datos personales</p>
+                </div>
               </div>
-              <div>
-                <h4 className="font-medium text-gray-900">Privacidad de datos</h4>
-                <p className="text-sm text-gray-600">Consentimiento de uso de datos</p>
+              <div className="flex items-center space-x-2">
+                <Badge variant="success">Configurado</Badge>
+                <ApperIcon 
+                  name={showPrivacyCenter ? "ChevronUp" : "ChevronDown"} 
+                  className="h-4 w-4 text-gray-400" 
+                />
               </div>
             </div>
-            <Badge variant="success">Otorgado</Badge>
-          </div>
 
-          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-xl">
-            <div className="flex items-center space-x-4">
-              <div className="bg-purple-100 p-3 rounded-lg">
-                <ApperIcon name="Camera" className="h-5 w-5 text-purple-600" />
+            {showPrivacyCenter && privacySettings && (
+              <div className="border-t border-gray-200 bg-gray-50 p-4">
+                <div className="space-y-6">
+                  {/* Consent Management Section */}
+                  <div>
+                    <h5 className="font-medium text-gray-900 mb-4">Gestión de Consentimientos</h5>
+                    <div className="space-y-4">
+                      {/* Data Usage Consent */}
+                      <div className="flex items-start justify-between p-4 bg-white rounded-lg border border-gray-200">
+                        <div className="flex-1 mr-4">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <ApperIcon name="Database" className="h-4 w-4 text-blue-600" />
+                            <h6 className="font-medium text-gray-900">Uso de Datos Personales</h6>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2">
+                            Autorizas el procesamiento de tus datos personales (nombre, edad, métricas de salud) 
+                            para personalizar tu experiencia en el reto de 21 días y generar reportes de progreso.
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Esto incluye: información del perfil, métricas de salud, progreso de hábitos y datos del calendario.
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handlePrivacyToggle('dataUsageConsent')}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${
+                            privacySettings.dataUsageConsent ? 'bg-green-600' : 'bg-gray-300'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              privacySettings.dataUsageConsent ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      {/* Image Sharing Consent */}
+                      <div className="flex items-start justify-between p-4 bg-white rounded-lg border border-gray-200">
+                        <div className="flex-1 mr-4">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <ApperIcon name="Camera" className="h-4 w-4 text-purple-600" />
+                            <h6 className="font-medium text-gray-900">Compartir Imágenes de Progreso</h6>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2">
+                            Permite que tus fotos de progreso puedan ser utilizadas de forma anónima 
+                            para testimonios y material promocional de la aplicación.
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Las imágenes se procesarán de manera confidencial y solo se compartirán con tu consentimiento explícito.
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handlePrivacyToggle('imageShareConsent')}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${
+                            privacySettings.imageShareConsent ? 'bg-green-600' : 'bg-gray-300'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              privacySettings.imageShareConsent ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      {/* Analytics Consent */}
+                      <div className="flex items-start justify-between p-4 bg-white rounded-lg border border-gray-200">
+                        <div className="flex-1 mr-4">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <ApperIcon name="BarChart3" className="h-4 w-4 text-orange-600" />
+                            <h6 className="font-medium text-gray-900">Análisis y Mejoras</h6>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2">
+                            Permite el análisis anónimo de tu uso de la aplicación para mejorar 
+                            la experiencia del usuario y desarrollar nuevas funcionalidades.
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Los datos se agregan de forma anónima y no se vinculan a tu identidad personal.
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handlePrivacyToggle('analyticsConsent')}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${
+                            privacySettings.analyticsConsent ? 'bg-green-600' : 'bg-gray-300'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              privacySettings.analyticsConsent ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Data Export Section */}
+                  <div>
+                    <h5 className="font-medium text-gray-900 mb-4">Exportar mis Datos</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="p-4 bg-white rounded-lg border border-gray-200">
+                        <div className="flex items-center space-x-2 mb-3">
+                          <ApperIcon name="User" className="h-4 w-4 text-blue-600" />
+                          <h6 className="font-medium text-gray-900">Datos Personales</h6>
+                        </div>
+                        <p className="text-xs text-gray-600 mb-3">
+                          Perfil, configuraciones, preferencias
+                        </p>
+                        <Button 
+                          variant="secondary" 
+                          size="sm" 
+                          className="w-full"
+                          onClick={() => handleDataDownload('personal')}
+                          disabled={dataDownloadLoading}
+                        >
+                          <ApperIcon name="Download" className="h-3 w-3 mr-2" />
+                          Descargar
+                        </Button>
+                      </div>
+
+                      <div className="p-4 bg-white rounded-lg border border-gray-200">
+                        <div className="flex items-center space-x-2 mb-3">
+                          <ApperIcon name="Camera" className="h-4 w-4 text-purple-600" />
+                          <h6 className="font-medium text-gray-900">Fotos</h6>
+                        </div>
+                        <p className="text-xs text-gray-600 mb-3">
+                          Imágenes de progreso subidas
+                        </p>
+                        <Button 
+                          variant="secondary" 
+                          size="sm" 
+                          className="w-full"
+                          onClick={() => handleDataDownload('photos')}
+                          disabled={dataDownloadLoading}
+                        >
+                          <ApperIcon name="Download" className="h-3 w-3 mr-2" />
+                          Descargar
+                        </Button>
+                      </div>
+
+                      <div className="p-4 bg-white rounded-lg border border-gray-200">
+                        <div className="flex items-center space-x-2 mb-3">
+                          <ApperIcon name="Activity" className="h-4 w-4 text-green-600" />
+                          <h6 className="font-medium text-gray-900">Métricas</h6>
+                        </div>
+                        <p className="text-xs text-gray-600 mb-3">
+                          Hábitos, progreso, mediciones
+                        </p>
+                        <Button 
+                          variant="secondary" 
+                          size="sm" 
+                          className="w-full"
+                          onClick={() => handleDataDownload('metrics')}
+                          disabled={dataDownloadLoading}
+                        >
+                          <ApperIcon name="Download" className="h-3 w-3 mr-2" />
+                          Descargar
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center space-x-2 mb-1">
+                            <ApperIcon name="Package" className="h-4 w-4 text-indigo-600" />
+                            <h6 className="font-medium text-gray-900">Exportación Completa</h6>
+                          </div>
+                          <p className="text-xs text-gray-600">
+                            Descargar todos tus datos en un archivo comprimido
+                          </p>
+                        </div>
+                        <Button 
+                          variant="primary" 
+                          size="sm"
+                          onClick={() => handleDataDownload('complete')}
+                          disabled={dataDownloadLoading}
+                        >
+                          <ApperIcon name="Download" className="h-4 w-4 mr-2" />
+                          Exportar Todo
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h4 className="font-medium text-gray-900">Uso de imágenes</h4>
-                <p className="text-sm text-gray-600">Consentimiento para fotos de progreso</p>
-              </div>
-            </div>
-            <Badge variant="success">Otorgado</Badge>
+            )}
           </div>
         </div>
       </Card>
 
-      {/* Danger Zone */}
+{/* Data Management Zone */}
       <Card className="p-6 border-red-200">
-        <h2 className="font-display font-semibold text-xl mb-4 text-red-900">Zona de Peligro</h2>
+        <h2 className="font-display font-semibold text-xl mb-4 text-red-900">Gestión de Datos</h2>
         
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-red-50 border border-red-200 rounded-xl">
-            <div>
-              <h4 className="font-medium text-red-900">Descargar mis datos</h4>
-              <p className="text-sm text-red-700">Exportar toda tu información en formato CSV</p>
+          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+            <div className="flex items-start space-x-3">
+              <div className="bg-yellow-100 p-2 rounded-lg">
+                <ApperIcon name="AlertTriangle" className="h-4 w-4 text-yellow-600" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-medium text-yellow-900 mb-2">Información Importante</h4>
+                <p className="text-sm text-yellow-800 mb-3">
+                  Según la normativa de protección de datos, tienes derecho a:
+                </p>
+                <ul className="text-sm text-yellow-800 space-y-1">
+                  <li>• Acceder a todos tus datos personales</li>
+                  <li>• Solicitar la corrección de información incorrecta</li>
+                  <li>• Retirar tu consentimiento en cualquier momento</li>
+                  <li>• Solicitar la eliminación completa de tu cuenta</li>
+                </ul>
+              </div>
             </div>
-            <Button variant="secondary" size="sm">
-              <ApperIcon name="Download" className="h-4 w-4 mr-2" />
-              Descargar
-            </Button>
           </div>
 
           <div className="flex items-center justify-between p-4 bg-red-50 border border-red-200 rounded-xl">
-            <div>
-              <h4 className="font-medium text-red-900">Eliminar cuenta</h4>
-              <p className="text-sm text-red-700">Eliminar permanentemente tu cuenta y todos los datos</p>
+            <div className="flex-1">
+              <h4 className="font-medium text-red-900">Solicitar Eliminación de Cuenta</h4>
+              <p className="text-sm text-red-700 mt-1">
+                Elimina permanentemente tu cuenta y todos los datos asociados. 
+                Esta acción no se puede deshacer.
+              </p>
+              <div className="mt-3 p-3 bg-red-100 rounded-lg">
+                <p className="text-xs text-red-800">
+                  <strong>Se eliminará:</strong> Perfil, fotos, métricas, progreso de hábitos, 
+                  configuraciones y cualquier otro dato asociado a tu cuenta.
+                </p>
+              </div>
             </div>
-            <Button variant="danger" size="sm">
-              <ApperIcon name="Trash2" className="h-4 w-4 mr-2" />
-              Eliminar
-            </Button>
+            <div className="ml-4">
+              <Button 
+                variant="danger" 
+                size="sm"
+                onClick={handleDeletionRequest}
+                disabled={deletionRequestLoading}
+              >
+                <ApperIcon name="Trash2" className="h-4 w-4 mr-2" />
+                {deletionRequestLoading ? 'Procesando...' : 'Solicitar Eliminación'}
+              </Button>
+            </div>
+          </div>
+
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+            <div className="flex items-center space-x-3">
+              <div className="bg-blue-100 p-2 rounded-lg">
+                <ApperIcon name="HelpCircle" className="h-4 w-4 text-blue-600" />
+              </div>
+              <div>
+                <h5 className="font-medium text-blue-900">¿Necesitas ayuda?</h5>
+                <p className="text-sm text-blue-800">
+                  Si tienes dudas sobre el manejo de tus datos o necesitas asistencia, 
+                  contacta nuestro equipo de soporte.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </Card>
