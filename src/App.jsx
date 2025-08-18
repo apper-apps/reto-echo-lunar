@@ -20,22 +20,20 @@ function App() {
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-emerald-50">
-        <Routes>
+<Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Navigate to="/dashboard" replace />} />
-<Route path="dashboard" element={<Dashboard />} />
-<Route path="calendario" element={<Calendar />} />
-<Route path="dia-0" element={<DayZero />} />
-<Route path="calendario" element={<Calendar />} />
-        <Route path="desafios-semanales" element={<Dashboard />} />
-        <Route path="dia-0" element={<DayZero />} />
-        <Route path="dia/:dayNumber" element={<DayPlan />} />
-        <Route path="habitos" element={<Habits />} />
-<Route path="ranking" element={<Progress />} />
-<Route path="perfil" element={<Profile />} />
-<Route path="onboarding" element={<Onboarding />} />
-<Route path="metricas-finales" element={<FinalMetrics />} />
-<Route path="dia-21" element={<FinalMetrics />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="calendario" element={<Calendar />} />
+            <Route path="dia-0" element={<DayZero />} />
+            <Route path="desafios-semanales" element={<Dashboard />} />
+            <Route path="dia/:dayNumber" element={<DayPlan />} />
+            <Route path="habitos" element={<Habits />} />
+            <Route path="ranking" element={<Progress />} />
+            <Route path="perfil" element={<Profile />} />
+            <Route path="onboarding" element={<Onboarding />} />
+            <Route path="metricas-finales" element={<FinalMetrics />} />
+            <Route path="dia-21" element={<FinalMetrics />} />
           </Route>
         </Routes>
 
