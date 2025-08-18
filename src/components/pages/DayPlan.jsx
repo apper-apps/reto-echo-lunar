@@ -4,6 +4,7 @@ import ApperIcon from "@/components/ApperIcon";
 import Card from "@/components/atoms/Card";
 import Button from "@/components/atoms/Button";
 import Badge from "@/components/atoms/Badge";
+import Input from "@/components/atoms/Input";
 import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import { dayPlanService } from "@/services/api/dayPlanService";
@@ -13,11 +14,11 @@ import { toast } from "react-toastify";
 const DayPlan = () => {
   const { dayNumber } = useParams();
   const navigate = useNavigate();
-  const [dayData, setDayData] = useState(null);
+const [dayData, setDayData] = useState(null);
   const [dayHabits, setDayHabits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
+  const [interactionStates, setInteractionStates] = useState({});
   const loadDayData = async () => {
     try {
       setLoading(true);
@@ -106,15 +107,30 @@ const DayPlan = () => {
     return times[section] || "";
   };
 
-  const renderSectionCard = (sectionKey, sectionData) => {
+const renderSectionCard = (sectionKey, sectionData) => {
     const isCompleted = sectionData?.completed || false;
+    const sectionState = interactionStates[sectionKey] || {};
+    
+    const getContentTypeStyle = (type) => {
+      const styles = {
+        survey: "from-blue-50 to-indigo-50 border-blue-200",
+        reflection: "from-purple-50 to-violet-50 border-purple-200",
+        educational: "from-emerald-50 to-teal-50 border-emerald-200",
+        confirmation: "from-amber-50 to-orange-50 border-amber-200",
+        default: ""
+      };
+      return styles[type] || styles.default;
+    };
+    
+    const contentType = sectionData?.type || 'default';
+    const cardStyle = isCompleted 
+      ? "bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-200" 
+      : `bg-gradient-to-r ${getContentTypeStyle(contentType)}`;
     
     return (
       <Card 
         key={sectionKey}
-        className={`p-6 transition-all duration-200 ${
-          isCompleted ? "bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-200" : ""
-        }`}
+        className={`p-6 transition-all duration-200 ${cardStyle}`}
       >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
@@ -154,14 +170,125 @@ const DayPlan = () => {
             <p className="text-gray-700 leading-relaxed">{sectionData.content}</p>
           )}
 
-          {sectionData?.reflection && (
+          {/* Educational Post with Image */}
+          {sectionData?.type === 'educational' && sectionData?.imageUrl && (
+            <div className="bg-white p-4 rounded-lg border border-emerald-100 shadow-sm">
+              <div className="aspect-video bg-gradient-to-r from-emerald-100 to-teal-100 rounded-lg mb-3 flex items-center justify-center">
+                <ApperIcon name="BookOpen" className="h-12 w-12 text-emerald-600" />
+              </div>
+              <div className="flex items-center justify-between">
+                <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
+                  📚 Contenido Educativo
+                </Badge>
+                <span className="text-xs text-emerald-600 font-medium">
+                  {sectionData.readTime || '2 min lectura'}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Survey with Rating Scale */}
+          {sectionData?.type === 'survey' && sectionData?.survey && (
+            <div className="bg-white p-4 rounded-lg border border-blue-100 shadow-sm">
+              <h5 className="font-medium text-blue-900 mb-3 flex items-center">
+                <ApperIcon name="HelpCircle" className="h-4 w-4 mr-2" />
+                Encuesta del Día
+              </h5>
+              <p className="text-blue-800 text-sm mb-4">{sectionData.survey}</p>
+              
+              <div className="space-y-3">
+                <p className="text-xs text-blue-600 font-medium">Califica del 1 al 5:</p>
+                <div className="flex space-x-2 justify-center">
+                  {[1, 2, 3, 4, 5].map((rating) => (
+                    <button
+                      key={rating}
+                      onClick={() => setInteractionStates(prev => ({
+                        ...prev,
+                        [sectionKey]: { ...prev[sectionKey], rating }
+                      }))}
+                      className={`w-10 h-10 rounded-full border-2 transition-all duration-200 flex items-center justify-center font-semibold ${
+                        sectionState.rating === rating
+                          ? 'bg-blue-500 border-blue-500 text-white shadow-lg scale-110'
+                          : 'border-blue-300 text-blue-400 hover:border-blue-400 hover:scale-105'
+                      }`}
+                    >
+                      {rating}
+                    </button>
+                  ))}
+                </div>
+                {sectionState.rating && (
+                  <div className="text-center">
+                    <span className="text-blue-700 text-sm font-medium">
+                      Calificación: {sectionState.rating}/5 ⭐
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Reflection Prompt with Text Input */}
+          {sectionData?.type === 'reflection' && sectionData?.reflection && (
+            <div className="bg-white p-4 rounded-lg border border-purple-100 shadow-sm">
+              <h5 className="font-medium text-purple-900 mb-3 flex items-center">
+                <ApperIcon name="Brain" className="h-4 w-4 mr-2" />
+                Momento de Reflexión
+              </h5>
+              <p className="text-purple-800 text-sm mb-4">{sectionData.reflection}</p>
+              
+              <div className="space-y-2">
+                <textarea
+                  value={sectionState.reflectionText || ''}
+                  onChange={(e) => setInteractionStates(prev => ({
+                    ...prev,
+                    [sectionKey]: { ...prev[sectionKey], reflectionText: e.target.value }
+                  }))}
+                  placeholder="Escribe tu reflexión aquí..."
+                  className="w-full p-3 border border-purple-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                  rows={3}
+                  maxLength={250}
+                />
+                <div className="flex justify-between items-center text-xs text-purple-600">
+                  <span>Comparte tus pensamientos</span>
+                  <span>{(sectionState.reflectionText || '').length}/250</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Completion Confirmation */}
+          {sectionData?.type === 'confirmation' && (
+            <div className="bg-white p-4 rounded-lg border border-amber-100 shadow-sm">
+              <div className="text-center space-y-3">
+                <div className="w-16 h-16 bg-gradient-to-r from-amber-400 to-orange-400 rounded-full flex items-center justify-center mx-auto">
+                  <ApperIcon name="Trophy" className="h-8 w-8 text-white" />
+                </div>
+                <h5 className="font-semibold text-amber-900">¡Momento de Celebración! 🎉</h5>
+                <p className="text-amber-800 text-sm">{sectionData.content}</p>
+                <div className="flex justify-center space-x-2 mt-4">
+                  {['🌟', '💪', '🚀', '✨', '🏆'].map((emoji, index) => (
+                    <span
+                      key={index}
+                      className="text-2xl animate-bounce"
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      {emoji}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Legacy content types */}
+          {!sectionData?.type && sectionData?.reflection && (
             <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
               <h5 className="font-medium text-purple-900 mb-2">💭 Reflexión:</h5>
               <p className="text-purple-800 text-sm">{sectionData.reflection}</p>
             </div>
           )}
 
-{sectionData?.checklist && sectionData.checklist.length > 0 && (
+          {sectionData?.checklist && sectionData.checklist.length > 0 && (
             <div className="space-y-2">
               <h5 className="font-medium text-gray-900">📝 Lista de tareas:</h5>
               {sectionData.checklist.map((item, index) => (
@@ -173,7 +300,7 @@ const DayPlan = () => {
             </div>
           )}
 
-          {sectionData?.survey && (
+          {!sectionData?.type && sectionData?.survey && (
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
               <h5 className="font-medium text-blue-900 mb-2">❓ Pregunta del día:</h5>
               <p className="text-blue-800 text-sm">{sectionData.survey}</p>
@@ -187,9 +314,13 @@ const DayPlan = () => {
             <Button
               onClick={() => handleSectionComplete(sectionKey)}
               className="w-full"
+              disabled={
+                (sectionData?.type === 'survey' && !sectionState.rating) ||
+                (sectionData?.type === 'reflection' && (!sectionState.reflectionText || sectionState.reflectionText.trim().length < 10))
+              }
             >
               <ApperIcon name="Check" className="h-4 w-4 mr-2" />
-              Marcar como Completado
+              {sectionData?.type === 'confirmation' ? '¡Celebrar Logro!' : 'Marcar como Completado'}
             </Button>
           </div>
         )}

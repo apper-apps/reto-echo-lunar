@@ -8,37 +8,75 @@ export const dayPlanService = {
     
     const dayPlan = dayPlans.find(dp => dp.day === day);
     if (!dayPlan) {
-      // Return a default day plan if specific day not found
+// Return a default day plan with interactive content types
+      const contentVariations = [
+        {
+          morning: {
+            type: 'educational',
+            title: `Aprende algo nuevo - Día ${day}`,
+            content: "El conocimiento es poder. Cada día aprende algo que te acerque a tus objetivos.",
+            imageUrl: '/images/morning-learning.jpg',
+            readTime: '3 min lectura',
+            completed: false
+          },
+          midday: {
+            type: 'survey',
+            title: `Evaluación del Día ${day}`,
+            content: "Momento perfecto para hacer una pausa y evaluar tu progreso.",
+            survey: "¿Qué tan productiva ha sido tu mañana?",
+            completed: false
+          },
+          afternoon: {
+            type: 'reflection',
+            title: `Reflexión de la Tarde - Día ${day}`,
+            content: "La tarde es ideal para reflexionar sobre tus experiencias y aprendizajes.",
+            reflection: "¿Qué has aprendido sobre ti mismo hoy? Describe una situación que te haya desafiado.",
+            completed: false
+          },
+          night: {
+            type: 'confirmation',
+            title: `Celebración Nocturna - Día ${day}`,
+            content: "¡Has completado otro día de crecimiento personal! Reconoce tus logros, por pequeños que sean.",
+            completed: false
+          }
+        },
+        {
+          morning: {
+            type: 'reflection',
+            title: `Intención Matutina - Día ${day}`,
+            content: "Establece una intención clara para guiar tu día hacia el éxito.",
+            reflection: "¿Cuál es tu intención principal para hoy? ¿Cómo vas a honrarla?",
+            completed: false
+          },
+          midday: {
+            type: 'educational',
+            title: `Pausa Educativa - Día ${day}`,
+            content: "Aprovecha este momento para nutrir tu mente con conocimiento valioso.",
+            imageUrl: '/images/midday-education.jpg',
+            readTime: '2 min lectura',
+            completed: false
+          },
+          afternoon: {
+            type: 'survey',
+            title: `Chequeo Vespertino - Día ${day}`,
+            content: "Evalúa tu estado de ánimo y energía para optimizar el resto del día.",
+            survey: "¿Cómo describirías tu nivel de energía en este momento?",
+            completed: false
+          },
+          night: {
+            type: 'confirmation',
+            title: `Logros del Día ${day}`,
+            content: "Cada paso cuenta en tu viaje de transformación. ¡Celebra lo que has logrado hoy!",
+            completed: false
+          }
+        }
+      ];
+
+      const selectedVariation = contentVariations[day % contentVariations.length];
+      
       return {
         day,
-        morning: {
-          title: `Mañana del Día ${day}`,
-          content: "Comienza tu día con energía y propósito. Cada día es una nueva oportunidad para crecer.",
-          reflection: "¿Qué quieres lograr hoy?",
-          checklist: [
-            "Hidrátate al despertar",
-            "Establece tu intención del día",
-            "Revisa tus hábitos pendientes"
-          ],
-          completed: false
-        },
-        midday: {
-          title: `Mediodía del Día ${day}`,
-          content: "Momento perfecto para hacer una pausa y evaluar cómo va tu día.",
-          completed: false
-        },
-        afternoon: {
-          title: `Tarde del Día ${day}`,
-          content: "La tarde es ideal para mantener el momentum y prepararte para un cierre exitoso.",
-          survey: "¿Cómo te sientes con tu progreso hasta ahora?",
-          completed: false
-        },
-        night: {
-          title: `Noche del Día ${day}`,
-          content: "Reflexiona sobre tus logros del día y prepárate para un descanso reparador.",
-          reflection: "¿Qué lograste hoy que te haga sentir orgulloso?",
-          completed: false
-        }
+        ...selectedVariation
       };
     }
     
