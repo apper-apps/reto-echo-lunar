@@ -208,5 +208,6 @@ const rankings = await this.calculateRankingWithBonusPoints();
       success: true,
       message: 'Ranking recalculado exitosamente',
       timestamp: new Date().toISOString()
-    };
+};
   }
+};
