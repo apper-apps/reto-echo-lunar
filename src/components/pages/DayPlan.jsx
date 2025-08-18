@@ -266,9 +266,9 @@ const renderSectionCard = (sectionKey, sectionData) => {
                 <h5 className="font-semibold text-amber-900">¡Momento de Celebración! 🎉</h5>
                 <p className="text-amber-800 text-sm">{sectionData.content}</p>
                 <div className="flex justify-center space-x-2 mt-4">
-                  {['🌟', '💪', '🚀', '✨', '🏆'].map((emoji, index) => (
+{['🌟', '💪', '🚀', '✨', '🏆'].map((emoji, index) => (
                     <span
-                      key={index}
+                      key={`${emoji}-${index}`}
                       className="text-2xl animate-bounce"
                       style={{ animationDelay: `${index * 0.1}s` }}
                     >
