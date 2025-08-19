@@ -38,7 +38,6 @@ constructor() {
 async initialize() {
     if (this.isInitialized) return { success: true, state: 'connected' };
     if (this.isInitializing) {
-      // Wait for current initialization to complete
       while (this.isInitializing) {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
@@ -49,24 +48,18 @@ async initialize() {
     this.connectionState = 'connecting';
 
     try {
-      // Validate environment variables first
       if (!import.meta.env.VITE_APPER_PROJECT_ID || !import.meta.env.VITE_APPER_PUBLIC_KEY) {
         throw new Error('CREDENTIALS_MISSING');
       }
 
-      // Wait for Apper SDK with exponential backoff
       const sdkLoaded = await this.waitForSDK();
-      if (!sdkLoaded) {
-        throw new Error('SDK_TIMEOUT');
-      }
+      if (!sdkLoaded) throw new Error('SDK_TIMEOUT');
 
-      // Initialize Apper with project credentials
       this.apper = new window.Apper({
         projectId: import.meta.env.VITE_APPER_PROJECT_ID,
         publicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
       });
 
-      // Connect with timeout
       await Promise.race([
         this.apper.connect(),
         new Promise((_, reject) => 
@@ -77,37 +70,30 @@ async initialize() {
       this.isInitialized = true;
       this.connectionState = 'connected';
       this.retryAttempts = 0;
-      console.log('Apper Database conectada exitosamente');
       
       return { success: true, state: 'connected' };
 
     } catch (error) {
-      console.error('Error inicializando Apper:', error);
       this.connectionState = 'failed';
       
-      // Handle specific error types
-      let userMessage;
+      let userMessage = 'Error conectando con la base de datos';
       let canRetry = false;
 
       if (error.message === 'CREDENTIALS_MISSING') {
-        userMessage = 'Credenciales de Apper no configuradas. Contacta al administrador.';
+        userMessage = 'Credenciales no configuradas';
       } else if (error.message === 'SDK_TIMEOUT') {
-        userMessage = `Apper SDK no se cargó después de varios intentos. Verifica tu conexión a internet.`;
+        userMessage = 'SDK no se cargó. Verifica tu conexión';
         canRetry = true;
       } else if (error.message === 'CONNECTION_TIMEOUT') {
-        userMessage = 'Tiempo de conexión agotado. Verifica tu conexión a internet.';
+        userMessage = 'Tiempo de conexión agotado';
         canRetry = true;
       } else {
-        userMessage = 'No se pudo conectar con la base de datos. Verifica tu conexión.';
         canRetry = true;
       }
 
-      // Attempt retry with exponential backoff
       if (canRetry && this.retryAttempts < this.maxRetryAttempts) {
         this.retryAttempts++;
-        const retryDelay = Math.min(1000 * Math.pow(2, this.retryAttempts - 1), 10000);
-        
-        console.log(`Reintentando conexión en ${retryDelay}ms (intento ${this.retryAttempts}/${this.maxRetryAttempts})`);
+        const retryDelay = Math.min(1000 * Math.pow(2, this.retryAttempts - 1), 5000);
         
         await new Promise(resolve => setTimeout(resolve, retryDelay));
         this.isInitializing = false;
@@ -116,7 +102,6 @@ async initialize() {
 
       const finalError = new Error(userMessage);
       finalError.canRetry = canRetry && this.retryAttempts >= this.maxRetryAttempts;
-      finalError.retryAttempts = this.retryAttempts;
       throw finalError;
 
     } finally {
@@ -124,23 +109,13 @@ async initialize() {
     }
   }
 
-  // Helper method to wait for SDK with better timeout handling
   async waitForSDK() {
-    const maxWaitTime = 30000; // 30 seconds total
-    const checkInterval = 200; // Check every 200ms
-    const maxAttempts = maxWaitTime / checkInterval;
-    
+    const maxAttempts = 150; // 30 seconds at 200ms intervals
     let attempts = 0;
     
     while (!window.Apper && attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, checkInterval));
+      await new Promise(resolve => setTimeout(resolve, 200));
       attempts++;
-      
-      // Log progress every 5 seconds
-      if (attempts % 25 === 0) {
-        const secondsWaited = (attempts * checkInterval) / 1000;
-        console.log(`Esperando SDK de Apper... (${secondsWaited}s)`);
-      }
     }
     
     return !!window.Apper;

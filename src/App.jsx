@@ -22,39 +22,17 @@ function App() {
 
 // Initialize Apper Database Connection
   useEffect(() => {
-    const initializeApperDatabase = async () => {
+const initializeApperDatabase = async () => {
       try {
         await apperService.initialize();
-        toast.success('Base de datos conectada exitosamente', {
+        toast.success('Base de datos conectada', {
           position: "top-center",
           autoClose: 2000
         });
       } catch (error) {
-        console.error('Error inicializando base de datos:', error);
-        
-// Provide specific error messages based on error type
-        let errorMessage = 'Error conectando con la base de datos';
-        let showRetryButton = false;
-        
-        if (error.message.includes('Apper SDK no se cargó') || error.message.includes('Tiempo de conexión agotado')) {
-          errorMessage = 'Error cargando componentes. Verifica tu conexión e intenta recargar.';
-          showRetryButton = error.canRetry || false;
-        } else if (error.message.includes('Credenciales') || error.message.includes('no configuradas')) {
-          errorMessage = 'Error de configuración. Contacta al soporte técnico.';
-        } else if (error.message.includes('No se pudo conectar')) {
-          errorMessage = 'Problemas de conexión. Verifica tu internet e intenta nuevamente.';
-          showRetryButton = true;
-        }
-        
-        // Add retry functionality if available
-        if (showRetryButton) {
-          console.log('Opción de reintento disponible');
-        }
-        
-        toast.error(errorMessage, {
+        toast.error(error.message, {
           position: "top-center",
-          autoClose: 8000,
-          closeOnClick: true
+          autoClose: 5000
         });
       } finally {
         setIsAppInitialized(true);
