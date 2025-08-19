@@ -20,7 +20,7 @@ function App() {
   const [userRole, setUserRole] = useState(null);
   const [isAppInitialized, setIsAppInitialized] = useState(false);
 
-  // Initialize Apper Database Connection
+// Initialize Apper Database Connection
   useEffect(() => {
     const initializeApperDatabase = async () => {
       try {
@@ -31,9 +31,19 @@ function App() {
         });
       } catch (error) {
         console.error('Error inicializando base de datos:', error);
-        toast.error('Error conectando con la base de datos', {
+        
+        // Provide specific error messages based on error type
+        let errorMessage = 'Error conectando con la base de datos';
+        if (error.message.includes('Apper SDK no se cargó')) {
+          errorMessage = 'Error cargando componentes. Verifica tu conexión e intenta recargar.';
+        } else if (error.message.includes('Credenciales')) {
+          errorMessage = 'Error de configuración. Contacta al soporte técnico.';
+        }
+        
+        toast.error(errorMessage, {
           position: "top-center",
-          autoClose: 5000
+          autoClose: 8000,
+          closeOnClick: true
         });
       } finally {
         setIsAppInitialized(true);

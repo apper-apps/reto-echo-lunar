@@ -17,19 +17,27 @@ class ApperService {
     };
   }
 
-  async initialize() {
+async initialize() {
     if (this.isInitialized) return;
 
     try {
-      // Wait for Apper SDK to be available
+      // Wait for Apper SDK to be available (10 second timeout)
       let attempts = 0;
-      while (!window.Apper && attempts < 30) {
+      const maxAttempts = 100; // 10 seconds at 100ms intervals
+      
+      while (!window.Apper && attempts < maxAttempts) {
         await new Promise(resolve => setTimeout(resolve, 100));
         attempts++;
       }
 
       if (!window.Apper) {
-        throw new Error('Apper SDK no disponible');
+        const timeoutSeconds = (maxAttempts * 100) / 1000;
+        throw new Error(`Apper SDK no se cargó después de ${timeoutSeconds} segundos. Verifica tu conexión a internet y recarga la página.`);
+      }
+
+      // Validate environment variables
+      if (!import.meta.env.VITE_APPER_PROJECT_ID || !import.meta.env.VITE_APPER_PUBLIC_KEY) {
+        throw new Error('Credenciales de Apper no configuradas. Contacta al administrador.');
       }
 
       // Initialize Apper with project credentials
@@ -43,7 +51,11 @@ class ApperService {
       console.log('Apper Database conectada exitosamente');
     } catch (error) {
       console.error('Error inicializando Apper:', error);
-      throw new Error('No se pudo conectar con la base de datos');
+      // Re-throw with original message if it's already user-friendly
+      if (error.message.includes('Apper SDK no se cargó') || error.message.includes('Credenciales')) {
+        throw error;
+      }
+      throw new Error('No se pudo conectar con la base de datos. Intenta recargar la página.');
     }
   }
 
