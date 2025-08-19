@@ -1,17 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { coachService } from '@/services/api/coachService';
-import { notificationService } from '@/services/api/notificationService';
-import { miniChallengeService } from '@/services/api/miniChallengeService';
-import { habitService } from '@/services/api/habitService';
-import { toast } from 'react-toastify';
-import ApperIcon from '@/components/ApperIcon';
-import Error from '@/components/ui/Error';
-import Loading from '@/components/ui/Loading';
-import Button from '@/components/atoms/Button';
-import Badge from '@/components/atoms/Badge';
-import Card from '@/components/atoms/Card';
+import React, { useEffect, useState } from "react";
+import { coachService } from "@/services/api/coachService";
+import { notificationService } from "@/services/api/notificationService";
+import { miniChallengeService } from "@/services/api/miniChallengeService";
+import { habitService } from "@/services/api/habitService";
+import { userService } from "@/services/api/userService";
+import { toast } from "react-toastify";
+import ApperIcon from "@/components/ApperIcon";
+import Error from "@/components/ui/Error";
+import Loading from "@/components/ui/Loading";
+import Button from "@/components/atoms/Button";
+import Badge from "@/components/atoms/Badge";
+import Card from "@/components/atoms/Card";
 
 const CoachDashboard = () => {
+  const [coachData, setCoachData] = useState(null);
   const [groupStats, setGroupStats] = useState(null);
   const [participants, setParticipants] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
@@ -22,7 +24,6 @@ const CoachDashboard = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [showRecommendationModal, setShowRecommendationModal] = useState(false);
-
   // Form states
   const [newRecommendation, setNewRecommendation] = useState({
     title: '',
@@ -49,18 +50,20 @@ const CoachDashboard = () => {
     loadCoachData();
   }, []);
 
-  const loadCoachData = async () => {
+const loadCoachData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const [stats, participantsList, recommendationsList, notificationsList] = await Promise.all([
+      const [coachUser, stats, participantsList, recommendationsList, notificationsList] = await Promise.all([
+        userService.getCurrentUser(),
         coachService.getGroupStats(),
         coachService.getAllParticipants(),
         coachService.getRecommendations(),
         notificationService.getRecentNotifications()
       ]);
 
+      setCoachData(coachUser);
       setGroupStats(stats);
       setParticipants(participantsList);
       setRecommendations(recommendationsList);
@@ -154,10 +157,12 @@ const CoachDashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-emerald-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
+<div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 font-display">Panel del Coach</h1>
+              <h1 className="text-3xl font-bold text-gray-900 font-display">
+                ¡Hola, Coach {coachData?.profile?.fullName?.split(' ')[0] || 'Entrenador'}! 👋
+              </h1>
               <p className="text-gray-600 mt-2">Gestiona tu grupo y monitorea el progreso</p>
             </div>
             <div className="flex gap-3">
