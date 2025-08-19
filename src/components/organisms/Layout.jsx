@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { progressService } from "@/services/api/progressService";
@@ -7,12 +7,16 @@ import { userService } from "@/services/api/userService";
 import { toast } from "react-toastify";
 import ApperIcon from "@/components/ApperIcon";
 import NavigationTabs from "@/components/molecules/NavigationTabs";
-const Layout = () => {
-const [userProgress, setUserProgress] = useState(null);
+const Layout = ({ userRole, onLogout }) => {
+const navigate = useNavigate();
+  const [userProgress, setUserProgress] = useState(null);
   const [notifications, setNotifications] = useState(3); // Mock notification count
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
-  const [userRole, setUserRole] = useState('Participante');
+  const [currentUserRole, setCurrentUserRole] = useState(null);
+
+  // Get user role from props or localStorage
+  const effectiveUserRole = userRole || localStorage.getItem('reto21d_role') || 'Participante';
 
   useEffect(() => {
     const handleResize = () => {
@@ -31,9 +35,10 @@ useEffect(() => {
           userService.getRoleType()
         ]);
         setUserProgress(progress);
-        setUserRole(role);
+        setCurrentUserRole(role);
       } catch (error) {
         console.error("Error loading user data:", error);
+        toast.error("Error loading user data");
       } finally {
         setLoading(false);
       }
@@ -41,6 +46,13 @@ useEffect(() => {
 
     loadUserData();
   }, []);
+
+  const handleLogout = () => {
+    if (onLogout) {
+      onLogout();
+    }
+    navigate('/login');
+  };
 
   const handleNotificationClick = () => {
     toast.info("No tienes notificaciones nuevas", {
@@ -69,7 +81,18 @@ return (
               <p className="text-sm text-gray-600 mt-1">Transformación 80/20</p>
             </div>
             
-<NavigationTabs userRole={userRole} />
+<NavigationTabs userRole={effectiveUserRole} />
+            
+            {/* Logout button for desktop */}
+            <div className="mt-auto pt-6 border-t border-purple-100">
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 w-full"
+              >
+                <ApperIcon name="LogOut" className="h-4 w-4" />
+                <span className="text-sm font-medium">Cerrar Sesión</span>
+              </button>
+            </div>
           </aside>
         
           {/* Desktop main content */}
@@ -197,7 +220,7 @@ return (
           </main>
           
 {/* Mobile bottom navigation */}
-<NavigationTabs userRole={userRole} />
+<NavigationTabs userRole={effectiveUserRole} />
 </>
       )}
     </div>

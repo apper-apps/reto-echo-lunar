@@ -57,17 +57,20 @@ path: "/dia-0"
     }
   ];
 
-  // Add coach tab if user is a coach
-  const coachTab = {
-    id: "coach",
-    label: "Coach",
-    icon: "Users",
-    path: "/coach"
-  };
+// Coach-only tabs
+  const coachTabs = [
+    {
+      id: "coach",
+      label: "Dashboard Coach",
+      icon: "Users",
+      path: "/coach"
+    }
+  ];
 
-  const tabs = userRole === 'Coach' ? [...baseTabs, coachTab] : baseTabs;
+  // Filter tabs based on user role
+  const tabs = userRole === 'Coach' ? coachTabs : baseTabs.filter(tab => tab.id !== 'coach');
 
-const isActive = (path) => {
+  const isActive = (path) => {
     return location.pathname === path || 
            (path === "/calendario" && location.pathname.startsWith("/dia/")) ||
            (path === "/dia-0" && location.pathname === "/dia-0") ||
