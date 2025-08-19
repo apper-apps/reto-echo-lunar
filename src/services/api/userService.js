@@ -1,11 +1,8 @@
-import usersData from "@/services/mockData/users.json";
+import { apperService } from "@/services/api/apperService";
 import React from "react";
 import Error from "@/components/ui/Error";
 
-// Initialize users data with validation
-let users = [...usersData];
-
-// Validate data structure on initialization
+// Validate data structure
 const validateUserData = (user) => {
   if (!user || typeof user !== 'object') {
     throw new Error("Datos de usuario inválidos");
@@ -15,154 +12,166 @@ const validateUserData = (user) => {
   }
   return true;
 };
-
-// Validate initial data
-users.forEach(validateUserData);
-
 export const userService = {
   async getCurrentUser(userId = null) {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    // Get user ID from localStorage or use provided
-    const targetUserId = userId || parseInt(localStorage.getItem('reto21d_userId') || '1');
-    
-    // Find user by ID
-    const user = users.find(u => u.Id === targetUserId);
-    if (!user) {
-      throw new Error("Usuario no encontrado");
+    try {
+      const targetUserId = userId || parseInt(localStorage.getItem('reto21d_userId') || '1');
+      
+      const user = await apperService.findById(apperService.tables.users, targetUserId);
+      if (!user) {
+        throw new Error("Usuario no encontrado");
+      }
+      
+      validateUserData(user);
+      return user;
+    } catch (error) {
+      console.error('Error obteniendo usuario actual:', error);
+      throw error;
     }
-    
-    // Validate user data structure
-    validateUserData(user);
-    
-    return JSON.parse(JSON.stringify(user));
   },
 
-async getUserProfile(userId = null) {
-    await new Promise(resolve => setTimeout(resolve, 250));
-    
-    const targetUserId = userId || parseInt(localStorage.getItem('reto21d_userId') || '1');
-    const user = users.find(u => u.Id === targetUserId);
-    if (!user) {
-      throw new Error("Perfil de usuario no encontrado");
+  async getUserProfile(userId = null) {
+    try {
+      const targetUserId = userId || parseInt(localStorage.getItem('reto21d_userId') || '1');
+      const user = await apperService.findById(apperService.tables.users, targetUserId);
+      
+      if (!user) {
+        throw new Error("Perfil de usuario no encontrado");
+      }
+      
+      validateUserData(user);
+      
+      if (!user.profile) {
+        // Create default profile if none exists
+        const defaultProfile = {
+          firstName: user.name || '',
+          lastName: '',
+          email: user.email || '',
+          phone: '',
+          dateOfBirth: '',
+          createdAt: new Date().toISOString()
+        };
+        
+        await apperService.update(apperService.tables.users, targetUserId, {
+          profile: defaultProfile
+        });
+        
+        return defaultProfile;
+      }
+      
+      return user.profile;
+    } catch (error) {
+      console.error('Error obteniendo perfil de usuario:', error);
+      throw error;
     }
-    
-    validateUserData(user);
-    
-    if (!user.profile) {
-      // Create default profile if none exists
-      user.profile = {
-        firstName: user.name || '',
-        lastName: '',
-        email: user.email || '',
-        phone: '',
-        dateOfBirth: '',
-        createdAt: new Date().toISOString()
-      };
-    }
-    
-    return JSON.parse(JSON.stringify(user.profile));
   },
 
   async updateProfile(profileData, userId = null) {
-    await new Promise(resolve => setTimeout(resolve, 400));
-    
-    // Validate input data
-    if (!profileData || typeof profileData !== 'object') {
-      throw new Error("Datos de perfil inválidos");
+    try {
+      if (!profileData || typeof profileData !== 'object') {
+        throw new Error("Datos de perfil inválidos");
+      }
+      
+      const targetUserId = userId || parseInt(localStorage.getItem('reto21d_userId') || '1');
+      const user = await apperService.findById(apperService.tables.users, targetUserId);
+      
+      if (!user) {
+        throw new Error("Usuario no encontrado");
+      }
+      
+      const updatedProfile = {
+        ...user.profile,
+        ...profileData,
+        updatedAt: new Date().toISOString()
+      };
+      
+      await apperService.update(apperService.tables.users, targetUserId, {
+        profile: updatedProfile
+      });
+      
+      return updatedProfile;
+    } catch (error) {
+      console.error('Error actualizando perfil:', error);
+      throw error;
     }
-    
-    const targetUserId = userId || parseInt(localStorage.getItem('reto21d_userId') || '1');
-    const userIndex = users.findIndex(u => u.Id === targetUserId);
-    if (userIndex === -1) {
-      throw new Error("Usuario no encontrado");
-    }
-    
-    // Ensure profile exists
-    if (!users[userIndex].profile) {
-      users[userIndex].profile = {};
-    }
-    
-    users[userIndex].profile = {
-      ...users[userIndex].profile,
-      ...profileData,
-      updatedAt: new Date().toISOString()
-    };
-    
-    return JSON.parse(JSON.stringify(users[userIndex].profile));
   },
-async updateUser(userData, userId = null) {
-    await new Promise(resolve => setTimeout(resolve, 350));
-    
-    // Validate input data
-    if (!userData || typeof userData !== 'object') {
-      throw new Error("Datos de usuario inválidos");
+
+  async updateUser(userData, userId = null) {
+    try {
+      if (!userData || typeof userData !== 'object') {
+        throw new Error("Datos de usuario inválidos");
+      }
+      
+      const targetUserId = userId || parseInt(localStorage.getItem('reto21d_userId') || '1');
+      
+      // Prevent ID modification
+      const { Id, ...safeUserData } = userData;
+      const updateData = {
+        ...safeUserData,
+        updatedAt: new Date().toISOString()
+      };
+      
+      const updatedUser = await apperService.update(apperService.tables.users, targetUserId, updateData);
+      validateUserData(updatedUser);
+      
+      return updatedUser;
+    } catch (error) {
+      console.error('Error actualizando usuario:', error);
+      throw error;
     }
-    
-    const targetUserId = userId || parseInt(localStorage.getItem('reto21d_userId') || '1');
-    const userIndex = users.findIndex(u => u.Id === targetUserId);
-    if (userIndex === -1) {
-      throw new Error("Usuario no encontrado");
-    }
-    
-    // Prevent ID modification
-    const { Id, ...safeUserData } = userData;
-    
-    users[userIndex] = {
-      ...users[userIndex],
-      ...safeUserData,
-      updatedAt: new Date().toISOString()
-    };
-    
-    validateUserData(users[userIndex]);
-    
-    return JSON.parse(JSON.stringify(users[userIndex]));
   },
 
   async getNotificationPreferences(userId = null) {
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
-    const targetUserId = userId || parseInt(localStorage.getItem('reto21d_userId') || '1');
-    const user = users.find(u => u.Id === targetUserId);
-    if (!user) {
-      throw new Error("Usuario no encontrado");
-    }
+    try {
+      const targetUserId = userId || parseInt(localStorage.getItem('reto21d_userId') || '1');
+      const user = await apperService.findById(apperService.tables.users, targetUserId);
+      
+      if (!user) {
+        throw new Error("Usuario no encontrado");
+      }
 
-    // Return notification preferences or defaults
-    const notifications = user.notificationPreferences || this.getDefaultNotificationSettings();
-    return JSON.parse(JSON.stringify(notifications));
+      return user.notificationPreferences || this.getDefaultNotificationSettings();
+    } catch (error) {
+      console.error('Error obteniendo preferencias de notificación:', error);
+      throw error;
+    }
   },
 
   async updateNotificationPreferences(preferences) {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    const userIndex = users.findIndex(u => u.Id === 1);
-    if (userIndex === -1) {
-      throw new Error("Usuario no encontrado");
-    }
-
-    // Handle nested property updates (e.g., 'dailyMoments.morning')
-    let updatedPreferences = { ...users[userIndex].notificationPreferences };
-    
-    Object.keys(preferences).forEach(key => {
-      if (key.includes('.')) {
-        const [parent, child] = key.split('.');
-        updatedPreferences[parent] = {
-          ...updatedPreferences[parent],
-          [child]: preferences[key]
-        };
-      } else {
-        updatedPreferences[key] = preferences[key];
+    try {
+      const userId = parseInt(localStorage.getItem('reto21d_userId') || '1');
+      const user = await apperService.findById(apperService.tables.users, userId);
+      
+      if (!user) {
+        throw new Error("Usuario no encontrado");
       }
-    });
 
-    users[userIndex].notificationPreferences = updatedPreferences;
-    
-    return JSON.parse(JSON.stringify(updatedPreferences));
+      let updatedPreferences = { ...user.notificationPreferences };
+      
+      Object.keys(preferences).forEach(key => {
+        if (key.includes('.')) {
+          const [parent, child] = key.split('.');
+          updatedPreferences[parent] = {
+            ...updatedPreferences[parent],
+            [child]: preferences[key]
+          };
+        } else {
+          updatedPreferences[key] = preferences[key];
+        }
+      });
+
+      await apperService.update(apperService.tables.users, userId, {
+        notificationPreferences: updatedPreferences
+      });
+      
+      return updatedPreferences;
+    } catch (error) {
+      console.error('Error actualizando preferencias de notificación:', error);
+      throw error;
+    }
   },
 
-getDefaultNotificationSettings() {
+  getDefaultNotificationSettings() {
     return {
       enabled: true,
       dailyMoments: {
@@ -184,188 +193,222 @@ getDefaultNotificationSettings() {
   },
 
   async getRoleType(userId = null) {
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
-    const targetUserId = userId || parseInt(localStorage.getItem('reto21d_userId') || '1');
-const user = users.find(u => u.Id === targetUserId);
-    if (!user) {
-      throw new Error("Usuario no encontrado");
-    }
+    try {
+      const targetUserId = userId || parseInt(localStorage.getItem('reto21d_userId') || '1');
+      const user = await apperService.findById(apperService.tables.users, targetUserId);
+      
+      if (!user) {
+        throw new Error("Usuario no encontrado");
+      }
 
-    // For demo: user ID 1 is coach, others are participants
-    // In production, this would check actual role from user data
-    return user.Id === 1 && user.role === 'Coach' ? 'Coach' : user.role || 'Participante';
+      return user.role || 'Participante';
+    } catch (error) {
+      console.error('Error obteniendo tipo de rol:', error);
+      throw error;
+    }
   },
 
   async setUserRole(userId, role) {
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
-    const userIndex = users.findIndex(u => u.Id === userId);
-    if (userIndex === -1) {
-      throw new Error("Usuario no encontrado");
+    try {
+      await apperService.update(apperService.tables.users, userId, { role });
+      return await apperService.findById(apperService.tables.users, userId);
+    } catch (error) {
+      console.error('Error estableciendo rol de usuario:', error);
+      throw error;
     }
-
-    users[userIndex].role = role;
-    return JSON.parse(JSON.stringify(users[userIndex]));
   },
 
   async getDayZeroStatus() {
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
-    const user = users.find(u => u.Id === 1);
-    if (!user) {
-      throw new Error("Usuario no encontrado");
-    }
+    try {
+      const userId = parseInt(localStorage.getItem('reto21d_userId') || '1');
+      const user = await apperService.findById(apperService.tables.users, userId);
+      
+      if (!user) {
+        throw new Error("Usuario no encontrado");
+      }
 
-    return {
-      day0_completed: user.day0_completed || false,
-      day21_completed: user.day21_completed || false
-    };
+      return {
+        day0_completed: user.day0_completed || false,
+        day21_completed: user.day21_completed || false
+      };
+    } catch (error) {
+      console.error('Error obteniendo estado día cero:', error);
+      throw error;
+    }
   },
 
   async updateDayZeroStatus(completed = true) {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    const userIndex = users.findIndex(u => u.Id === 1);
-    if (userIndex === -1) {
-      throw new Error("Usuario no encontrado");
+    try {
+      const userId = parseInt(localStorage.getItem('reto21d_userId') || '1');
+      
+      await apperService.update(apperService.tables.users, userId, {
+        day0_completed: completed
+      });
+      
+      const user = await apperService.findById(apperService.tables.users, userId);
+      
+      return {
+        day0_completed: completed,
+        day21_completed: user.day21_completed || false
+      };
+    } catch (error) {
+      console.error('Error actualizando estado día cero:', error);
+      throw error;
     }
-
-    users[userIndex].day0_completed = completed;
-    
-    return {
-      day0_completed: completed,
-      day21_completed: users[userIndex].day21_completed || false
-    };
   },
 
   async getPrivacySettings() {
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
-    const user = users.find(u => u.Id === 1);
-    if (!user) {
-      throw new Error("Usuario no encontrado");
-    }
+    try {
+      const userId = parseInt(localStorage.getItem('reto21d_userId') || '1');
+      const user = await apperService.findById(apperService.tables.users, userId);
+      
+      if (!user) {
+        throw new Error("Usuario no encontrado");
+      }
 
-    return user.privacySettings || {
-      dataUsageConsent: true,
-      imageShareConsent: true,
-      analyticsConsent: true,
-      consentDate: new Date().toISOString(),
-      lastUpdated: new Date().toISOString()
-    };
+      return user.privacySettings || {
+        dataUsageConsent: true,
+        imageShareConsent: true,
+        analyticsConsent: true,
+        consentDate: new Date().toISOString(),
+        lastUpdated: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Error obteniendo configuración de privacidad:', error);
+      throw error;
+    }
   },
 
   async updatePrivacySetting(setting, value) {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    const userIndex = users.findIndex(u => u.Id === 1);
-    if (userIndex === -1) {
-      throw new Error("Usuario no encontrado");
-    }
+    try {
+      const userId = parseInt(localStorage.getItem('reto21d_userId') || '1');
+      const user = await apperService.findById(apperService.tables.users, userId);
+      
+      if (!user) {
+        throw new Error("Usuario no encontrado");
+      }
 
-    if (!users[userIndex].privacySettings) {
-      users[userIndex].privacySettings = {
+      const currentSettings = user.privacySettings || {
         dataUsageConsent: true,
         imageShareConsent: true,
         analyticsConsent: true,
         consentDate: new Date().toISOString()
       };
+
+      const updatedSettings = {
+        ...currentSettings,
+        [setting]: value,
+        lastUpdated: new Date().toISOString()
+      };
+
+      await apperService.update(apperService.tables.users, userId, {
+        privacySettings: updatedSettings
+      });
+
+      return updatedSettings;
+    } catch (error) {
+      console.error('Error actualizando configuración de privacidad:', error);
+      throw error;
     }
-
-    users[userIndex].privacySettings[setting] = value;
-    users[userIndex].privacySettings.lastUpdated = new Date().toISOString();
-
-    return users[userIndex].privacySettings;
   },
 
   async exportUserData(dataType) {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const user = users.find(u => u.Id === 1);
-    if (!user) {
-      throw new Error("Usuario no encontrado");
+    try {
+      const userId = parseInt(localStorage.getItem('reto21d_userId') || '1');
+      const user = await apperService.findById(apperService.tables.users, userId);
+      
+      if (!user) {
+        throw new Error("Usuario no encontrado");
+      }
+
+      const exportData = {
+        exportDate: new Date().toISOString(),
+        userId: user.Id,
+        dataType: dataType
+      };
+
+      switch (dataType) {
+        case 'personal':
+          exportData.data = {
+            profile: user.profile || {},
+            preferences: user.preferences || {},
+            privacySettings: user.privacySettings || {},
+            notifications: user.notifications || {}
+          };
+          break;
+          
+        case 'photos':
+          exportData.data = {
+            profilePhotos: user.photos || [],
+            progressPhotos: user.progressPhotos || [],
+            uploadHistory: user.photoHistory || []
+          };
+          break;
+          
+        case 'metrics':
+          exportData.data = {
+            habits: user.habits || [],
+            healthMetrics: user.healthMetrics || [],
+            progress: user.progress || [],
+            dailyLogs: user.dailyLogs || []
+          };
+          break;
+          
+        case 'complete':
+          exportData.data = {
+            profile: user.profile || {},
+            preferences: user.preferences || {},
+            privacySettings: user.privacySettings || {},
+            notifications: user.notifications || {},
+            photos: user.photos || [],
+            progressPhotos: user.progressPhotos || [],
+            habits: user.habits || [],
+            healthMetrics: user.healthMetrics || [],
+            progress: user.progress || [],
+            dailyLogs: user.dailyLogs || [],
+            completionStats: {
+              day0_completed: user.day0_completed || false,
+              day21_completed: user.day21_completed || false
+            }
+          };
+          break;
+          
+        default:
+          throw new Error("Tipo de datos no válido");
+      }
+
+      return exportData;
+    } catch (error) {
+      console.error('Error exportando datos de usuario:', error);
+      throw error;
     }
-
-    const exportData = {
-      exportDate: new Date().toISOString(),
-      userId: user.Id,
-      dataType: dataType
-    };
-
-    switch (dataType) {
-      case 'personal':
-        exportData.data = {
-          profile: user.profile || {},
-          preferences: user.preferences || {},
-          privacySettings: user.privacySettings || {},
-          notifications: user.notifications || {}
-        };
-        break;
-        
-      case 'photos':
-        exportData.data = {
-          profilePhotos: user.photos || [],
-          progressPhotos: user.progressPhotos || [],
-          uploadHistory: user.photoHistory || []
-        };
-        break;
-        
-      case 'metrics':
-        exportData.data = {
-          habits: user.habits || [],
-          healthMetrics: user.healthMetrics || [],
-          progress: user.progress || [],
-          dailyLogs: user.dailyLogs || []
-        };
-        break;
-        
-      case 'complete':
-        exportData.data = {
-          profile: user.profile || {},
-          preferences: user.preferences || {},
-          privacySettings: user.privacySettings || {},
-          notifications: user.notifications || {},
-          photos: user.photos || [],
-          progressPhotos: user.progressPhotos || [],
-          habits: user.habits || [],
-          healthMetrics: user.healthMetrics || [],
-          progress: user.progress || [],
-          dailyLogs: user.dailyLogs || [],
-          completionStats: {
-            day0_completed: user.day0_completed || false,
-            day21_completed: user.day21_completed || false
-          }
-        };
-        break;
-        
-      default:
-        throw new Error("Tipo de datos no válido");
-    }
-
-    return exportData;
   },
 
   async requestAccountDeletion() {
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    const user = users.find(u => u.Id === 1);
-    if (!user) {
-      throw new Error("Usuario no encontrado");
+    try {
+      const userId = parseInt(localStorage.getItem('reto21d_userId') || '1');
+      const user = await apperService.findById(apperService.tables.users, userId);
+      
+      if (!user) {
+        throw new Error("Usuario no encontrado");
+      }
+
+      const deletionRequest = {
+        userId: user.Id,
+        requestDate: new Date().toISOString(),
+        status: 'pending',
+        scheduledDeletion: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        confirmationRequired: true
+      };
+
+      await apperService.update(apperService.tables.users, userId, {
+        deletionRequest: deletionRequest
+      });
+
+      return deletionRequest;
+    } catch (error) {
+      console.error('Error solicitando eliminación de cuenta:', error);
+      throw error;
     }
-
-    // In a real app, this would create a deletion request record
-    const deletionRequest = {
-      userId: user.Id,
-      requestDate: new Date().toISOString(),
-      status: 'pending',
-      scheduledDeletion: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
-      confirmationRequired: true
-    };
-
-    // Mark user for deletion (in real app, would be in separate table)
-    user.deletionRequest = deletionRequest;
-
-    return deletionRequest;
   }
 };
