@@ -418,8 +418,8 @@ export const progressService = {
   },
 
   async getWeeklyComparison() {
-    try {
-      return {
+try {
+      const comparisonData = {
         weeks: [
           { week: 1, metrics: { peso_kg: 71.8, cintura_cm: 87.5, adherence: 75 } },
           { week: 2, metrics: { peso_kg: 70.2, cintura_cm: 86.1, adherence: 85 } },
@@ -431,6 +431,8 @@ export const progressService = {
           adherence: +17
         }
       };
+      
+      return comparisonData;
     } catch (error) {
       console.error('Error obteniendo comparación semanal:', error);
       throw error;
