@@ -23,21 +23,59 @@ function App() {
   const [userRole, setUserRole] = useState(null);
 
   // Check for existing authentication on app load
-  useEffect(() => {
-    const savedAuth = localStorage.getItem('reto21d_auth');
-    const savedRole = localStorage.getItem('reto21d_role');
+useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        const savedAuth = localStorage.getItem('reto21d_auth');
+        const savedRole = localStorage.getItem('reto21d_role');
+        const savedUserId = localStorage.getItem('reto21d_userId');
+        
+        if (savedAuth && savedRole && savedUserId) {
+          // Validate user still exists and role is current
+          const { userService } = await import('@/services/api/userService');
+          const currentRole = await userService.getRoleType();
+          
+          if (currentRole === savedRole) {
+            setIsAuthenticated(true);
+            setUserRole(savedRole);
+          } else {
+            // Role changed, clear old auth
+            localStorage.removeItem('reto21d_auth');
+            localStorage.removeItem('reto21d_role');
+            localStorage.removeItem('reto21d_userId');
+          }
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        // Clear invalid auth data
+        localStorage.removeItem('reto21d_auth');
+        localStorage.removeItem('reto21d_role');
+        localStorage.removeItem('reto21d_userId');
+      }
+    };
     
-    if (savedAuth && savedRole) {
-      setIsAuthenticated(true);
-      setUserRole(savedRole);
-    }
+    initializeAuth();
   }, []);
 
-  const handleLogin = (role) => {
-    setIsAuthenticated(true);
-    setUserRole(role);
-    localStorage.setItem('reto21d_auth', 'true');
-    localStorage.setItem('reto21d_role', role);
+  const handleLogin = async (role, userId = 1) => {
+    try {
+      const { userService } = await import('@/services/api/userService');
+      
+      // Validate user and role
+      const userRole = await userService.getRoleType();
+      if (userRole !== role) {
+        throw new Error('Rol de usuario inválido');
+      }
+      
+      setIsAuthenticated(true);
+      setUserRole(role);
+      localStorage.setItem('reto21d_auth', 'true');
+      localStorage.setItem('reto21d_role', role);
+      localStorage.setItem('reto21d_userId', userId.toString());
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
   };
 
   const handleLogout = () => {
@@ -45,6 +83,7 @@ function App() {
     setUserRole(null);
     localStorage.removeItem('reto21d_auth');
     localStorage.removeItem('reto21d_role');
+    localStorage.removeItem('reto21d_userId');
   };
 
   // Protected Route Component

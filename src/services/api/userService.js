@@ -1,68 +1,130 @@
 import usersData from "@/services/mockData/users.json";
+import React from "react";
+import Error from "@/components/ui/Error";
 
+// Initialize users data with validation
 let users = [...usersData];
 
+// Validate data structure on initialization
+const validateUserData = (user) => {
+  if (!user || typeof user !== 'object') {
+    throw new Error("Datos de usuario inválidos");
+  }
+  if (!user.Id || typeof user.Id !== 'number') {
+    throw new Error("ID de usuario requerido");
+  }
+  return true;
+};
+
+// Validate initial data
+users.forEach(validateUserData);
+
 export const userService = {
-  async getCurrentUser() {
+  async getCurrentUser(userId = null) {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 300));
     
-    // Return first user as current user (mock authentication)
-    const user = users.find(u => u.Id === 1);
+    // Get user ID from localStorage or use provided
+    const targetUserId = userId || parseInt(localStorage.getItem('reto21d_userId') || '1');
+    
+    // Find user by ID
+    const user = users.find(u => u.Id === targetUserId);
     if (!user) {
       throw new Error("Usuario no encontrado");
     }
     
+    // Validate user data structure
+    validateUserData(user);
+    
     return JSON.parse(JSON.stringify(user));
   },
 
-  async getUserProfile() {
+async getUserProfile(userId = null) {
     await new Promise(resolve => setTimeout(resolve, 250));
     
-    const user = users.find(u => u.Id === 1);
+    const targetUserId = userId || parseInt(localStorage.getItem('reto21d_userId') || '1');
+    const user = users.find(u => u.Id === targetUserId);
     if (!user) {
       throw new Error("Perfil de usuario no encontrado");
+    }
+    
+    validateUserData(user);
+    
+    if (!user.profile) {
+      // Create default profile if none exists
+      user.profile = {
+        firstName: user.name || '',
+        lastName: '',
+        email: user.email || '',
+        phone: '',
+        dateOfBirth: '',
+        createdAt: new Date().toISOString()
+      };
     }
     
     return JSON.parse(JSON.stringify(user.profile));
   },
 
-  async updateProfile(profileData) {
+  async updateProfile(profileData, userId = null) {
     await new Promise(resolve => setTimeout(resolve, 400));
     
-    const userIndex = users.findIndex(u => u.Id === 1);
+    // Validate input data
+    if (!profileData || typeof profileData !== 'object') {
+      throw new Error("Datos de perfil inválidos");
+    }
+    
+    const targetUserId = userId || parseInt(localStorage.getItem('reto21d_userId') || '1');
+    const userIndex = users.findIndex(u => u.Id === targetUserId);
     if (userIndex === -1) {
       throw new Error("Usuario no encontrado");
+    }
+    
+    // Ensure profile exists
+    if (!users[userIndex].profile) {
+      users[userIndex].profile = {};
     }
     
     users[userIndex].profile = {
       ...users[userIndex].profile,
-      ...profileData
+      ...profileData,
+      updatedAt: new Date().toISOString()
     };
     
     return JSON.parse(JSON.stringify(users[userIndex].profile));
   },
-
-  async updateUser(userData) {
+async updateUser(userData, userId = null) {
     await new Promise(resolve => setTimeout(resolve, 350));
     
-    const userIndex = users.findIndex(u => u.Id === 1);
+    // Validate input data
+    if (!userData || typeof userData !== 'object') {
+      throw new Error("Datos de usuario inválidos");
+    }
+    
+    const targetUserId = userId || parseInt(localStorage.getItem('reto21d_userId') || '1');
+    const userIndex = users.findIndex(u => u.Id === targetUserId);
     if (userIndex === -1) {
       throw new Error("Usuario no encontrado");
     }
     
+    // Prevent ID modification
+    const { Id, ...safeUserData } = userData;
+    
     users[userIndex] = {
       ...users[userIndex],
-      ...userData
+      ...safeUserData,
+      updatedAt: new Date().toISOString()
     };
+    
+    validateUserData(users[userIndex]);
     
     return JSON.parse(JSON.stringify(users[userIndex]));
   },
 
-  async getNotificationPreferences() {
+  async getNotificationPreferences(userId = null) {
     await new Promise(resolve => setTimeout(resolve, 200));
     
-    const user = users.find(u => u.Id === 1);
+    const targetUserId = userId || parseInt(localStorage.getItem('reto21d_userId') || '1');
+    const user = users.find(u => u.Id === targetUserId);
     if (!user) {
       throw new Error("Usuario no encontrado");
     }
@@ -100,7 +162,7 @@ export const userService = {
     return JSON.parse(JSON.stringify(updatedPreferences));
   },
 
-  getDefaultNotificationSettings() {
+getDefaultNotificationSettings() {
     return {
       enabled: true,
       dailyMoments: {
@@ -115,14 +177,17 @@ export const userService = {
         evening: '18:00',
         night: '21:00'
       },
-habitCompletion: true
+      habitCompletion: true,
+      milestones: true,
+      reminders: true
     };
-},
+  },
 
-async getRoleType() {
+  async getRoleType(userId = null) {
     await new Promise(resolve => setTimeout(resolve, 200));
     
-    const user = users.find(u => u.Id === 1);
+    const targetUserId = userId || parseInt(localStorage.getItem('reto21d_userId') || '1');
+const user = users.find(u => u.Id === targetUserId);
     if (!user) {
       throw new Error("Usuario no encontrado");
     }

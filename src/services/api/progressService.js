@@ -55,64 +55,65 @@ export const progressService = {
     await new Promise(resolve => setTimeout(resolve, 400));
     
     // Mock chart data for weight progression
-    const chartData = {
+const chartData = {
       categories: ["Día 0", "Día 7", "Día 14", "Día 21"],
       series: [
-{
-name: "Peso (kg)",
-data: [72.5, 72.1, 71.8, 71.5, 71.2, 70.9, 70.6, 70.3, 70.0, 69.8, 69.5, 69.2, 69.0, 68.8, 68.5, 68.3, 68.1, 67.9, 67.7, 67.5, 67.2]
-},
-{
-name: "Cintura (cm)", 
-data: [88.5, 88.2, 87.9, 87.6, 87.4, 87.2, 87.0, 86.8, 86.5, 86.2, 85.8, 85.5, 85.2, 84.9, 84.6, 84.4, 84.2, 84.0, 83.8, 83.5, 84.1]
-},
-{
-name: "% Grasa Corporal",
-data: [28.5, 28.2, 27.9, 27.6, 27.4, 27.1, 26.9, 26.6, 26.3, 26.0, 25.6, 25.3, 25.0, 24.8, 24.5, 24.3, 24.1, 23.9, 23.6, 23.4, 24.2]
-},
-{
-name: "Adherencia de Hábitos (%)",
-data: [0, 45, 60, 70, 75, 80, 85, 82, 88, 90, 85, 92, 88, 94, 90, 96, 92, 98, 95, 97, 100]
-}
-]
+        {
+          name: "Peso (kg)",
+          data: [72.5, 72.1, 71.8, 71.5, 71.2, 70.9, 70.6, 70.3, 70.0, 69.8, 69.5, 69.2, 69.0, 68.8, 68.5, 68.3, 68.1, 67.9, 67.7, 67.5, 67.2]
+        },
+        {
+          name: "Cintura (cm)", 
+          data: [88.5, 88.2, 87.9, 87.6, 87.4, 87.2, 87.0, 86.8, 86.5, 86.2, 85.8, 85.5, 85.2, 84.9, 84.6, 84.4, 84.2, 84.0, 83.8, 83.5, 84.1]
+        },
+        {
+          name: "% Grasa Corporal",
+          data: [28.5, 28.2, 27.9, 27.6, 27.4, 27.1, 26.9, 26.6, 26.3, 26.0, 25.6, 25.3, 25.0, 24.8, 24.5, 24.3, 24.1, 23.9, 23.6, 23.4, 24.2]
+        },
+        {
+          name: "Adherencia de Hábitos (%)",
+          data: [0, 45, 60, 70, 75, 80, 85, 82, 88, 90, 85, 92, 88, 94, 90, 96, 92, 98, 95, 97, 100]
+        }
+      ]
     };
-return JSON.parse(JSON.stringify(chartData));
+    return JSON.parse(JSON.stringify(chartData));
   },
 
-  getAdditionalData() {
+getAdditionalData() {
     return {
       weeklyData: [
         {
-week: 1,
-completionRate: 75,
-habitsCompleted: 18,
-totalHabits: 24,
-activeDays: 6,
-avgWeight: 71.8,
-avgWaist: 87.5
-},
-{
+          week: 1,
+          completionRate: 75,
+          habitsCompleted: 18,
+          totalHabits: 24,
+          activeDays: 6,
+          avgWeight: 71.8,
+          avgWaist: 87.5
+        },
+        {
+          week: 2,
 week: 2,
-completionRate: 85,
-habitsCompleted: 22,
-totalHabits: 26,
-activeDays: 7,
-avgWeight: 70.2,
-avgWaist: 86.1
-},
-{
-week: 3,
-completionRate: 92,
-habitsCompleted: 25,
-totalHabits: 27,
-activeDays: 7,
-avgWeight: 68.8,
-avgWaist: 84.3
-}
-],
-habitCompletion: [
-{
-name: "Agua 8 vasos",
+          completionRate: 85,
+          habitsCompleted: 22,
+          totalHabits: 26,
+          activeDays: 7,
+          avgWeight: 70.2,
+          avgWaist: 86.1
+        },
+        {
+          week: 3,
+          completionRate: 92,
+          habitsCompleted: 25,
+          totalHabits: 27,
+          activeDays: 7,
+          avgWeight: 68.8,
+          avgWaist: 84.3
+        }
+      ],
+      habitCompletion: [
+        {
+          name: "Agua 8 vasos",
 completionRate: 95,
 completedDays: 20,
 totalDays: 21,
@@ -217,13 +218,18 @@ totalHabits: 6
 
   async unlockAchievement(achievementData) {
     await new Promise(resolve => setTimeout(resolve, 250));
-    
-    const progressIndex = progress.findIndex(p => p.userId === 1);
+const progressIndex = progress.findIndex(p => p.userId === 1);
     if (progressIndex !== -1) {
+      // Ensure achievements array exists
+      if (!progress[progressIndex].achievements) {
+        progress[progressIndex].achievements = [];
+      }
+      
       const maxId = progress[progressIndex].achievements.length > 0 
         ? Math.max(...progress[progressIndex].achievements.map(a => a.id)) 
         : 0;
-const newAchievement = {
+        
+      const newAchievement = {
         id: maxId + 1,
         ...achievementData,
         unlockedAt: new Date().toISOString()
@@ -310,8 +316,8 @@ const newAchievement = {
     };
   },
 
-  async getTopRankings(limit = 10) {
-const rankings = await this.calculateRankingWithBonusPoints();
+async getTopRankings(limit = 10) {
+    const rankings = await this.calculateRankingWithBonusPoints();
     return {
       rankings: rankings.slice(0, limit),
       totalParticipants: rankings.length,
@@ -329,47 +335,46 @@ const rankings = await this.calculateRankingWithBonusPoints();
     return {
       success: true,
       message: 'Ranking recalculado exitosamente',
-timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString()
     };
-},
-
+  },
 async getHabitProgressChart() {
-await new Promise(resolve => setTimeout(resolve, 400));
-return {
-categories: Array.from({ length: 21 }, (_, i) => `Día ${i + 1}`),
-series: [
-{
-name: "Adherencia General (%)",
-data: Array.from({ length: 21 }, (_, i) => Math.min(60 + (i * 2) + Math.floor(Math.random() * 10), 100)),
-color: "#7C3AED"
-},
-{
-name: "Hábitos Completados",
-data: Array.from({ length: 21 }, (_, i) => Math.min(3 + Math.floor(i/3) + Math.floor(Math.random() * 2), 6)),
-color: "#10B981"
-},
-{
-name: "Puntos Diarios",
-data: Array.from({ length: 21 }, (_, i) => 50 + (i * 3) + Math.floor(Math.random() * 20)),
-color: "#2563EB"
-}
-]
-};
-},
+    await new Promise(resolve => setTimeout(resolve, 400));
+    return {
+      categories: Array.from({ length: 21 }, (_, i) => `Día ${i + 1}`),
+      series: [
+        {
+          name: "Adherencia General (%)",
+          data: Array.from({ length: 21 }, (_, i) => Math.min(60 + (i * 2) + Math.floor(Math.random() * 10), 100)),
+          color: "#7C3AED"
+        },
+        {
+          name: "Hábitos Completados",
+          data: Array.from({ length: 21 }, (_, i) => Math.min(3 + Math.floor(i/3) + Math.floor(Math.random() * 2), 6)),
+          color: "#10B981"
+        },
+        {
+          name: "Puntos Diarios",
+          data: Array.from({ length: 21 }, (_, i) => 50 + (i * 3) + Math.floor(Math.random() * 20)),
+          color: "#2563EB"
+        }
+      ]
+    };
+  },
 
-async getWeeklyComparison() {
-await new Promise(resolve => setTimeout(resolve, 350));
-return {
-weeks: [
-{ week: 1, metrics: { peso_kg: 71.8, cintura_cm: 87.5, adherence: 75 } },
-{ week: 2, metrics: { peso_kg: 70.2, cintura_cm: 86.1, adherence: 85 } },
-{ week: 3, metrics: { peso_kg: 68.8, cintura_cm: 84.3, adherence: 92 } }
-],
-improvements: {
-weight: -4.0,
-waist: -4.2,
-adherence: +17
-}
-};
-}
+  async getWeeklyComparison() {
+    await new Promise(resolve => setTimeout(resolve, 350));
+    return {
+      weeks: [
+        { week: 1, metrics: { peso_kg: 71.8, cintura_cm: 87.5, adherence: 75 } },
+        { week: 2, metrics: { peso_kg: 70.2, cintura_cm: 86.1, adherence: 85 } },
+        { week: 3, metrics: { peso_kg: 68.8, cintura_cm: 84.3, adherence: 92 } }
+      ],
+      improvements: {
+        weight: -4.0,
+        waist: -4.2,
+        adherence: +17
+      }
+    };
+  }
 };
